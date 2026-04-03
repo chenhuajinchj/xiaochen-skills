@@ -10,28 +10,28 @@
   },
   "plugins": [
     {
-      "name": "davinci-subtitle-fixer",
+      "name": "cyxj-davinci-subtitle-fixer",
       "description": "达芬奇字幕修正工具",
       "source": "./",
       "strict": false,
       "skills": ["./skills/davinci-subtitle-fixer"]
     },
     {
-      "name": "wechat-publisher",
+      "name": "cyxj-wechat-publisher",
       "description": "公众号排版发布",
       "source": "./",
       "strict": false,
       "skills": ["./skills/wechat-publisher"]
     },
     {
-      "name": "wechat-mosaic",
+      "name": "cyxj-wechat-mosaic",
       "description": "微信截图打码",
       "source": "./",
       "strict": false,
       "skills": ["./skills/wechat-mosaic"]
     },
     {
-      "name": "cc-price-calculator",
+      "name": "cyxj-cc-price-calculator",
       "description": "Claude 订阅/拼车成本计算",
       "source": "./",
       "strict": false,
