@@ -36,6 +36,13 @@
       "source": "./",
       "strict": false,
       "skills": ["./skills/cc-price-calculator"]
+    },
+    {
+      "name": "cyxj-obsidian-compiler",
+      "description": "Obsidian 知识库编译：Wiki 概念页、反向链接、日记提炼、健康度检查",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/obsidian-wiki-compiler"]
     }
   ]
 }

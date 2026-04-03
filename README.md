@@ -10,6 +10,7 @@
 | [wechat-publisher](./skills/wechat-publisher/) | 公众号排版发布：Obsidian Markdown → 微信公众号格式 |
 | [wechat-mosaic](./skills/wechat-mosaic/) | 微信截图打码：批量马赛克 + 朋友圈文案生成 |
 | [cc-price-calculator](./skills/cc-price-calculator/) | 订阅成本计算：Claude 订阅/拼车/中转成本计算器 |
+| [obsidian-wiki-compiler](./skills/obsidian-wiki-compiler/) | 知识库编译：扫描 Obsidian 笔记，自动生成 Wiki 概念页、反向链接和健康度检查 |
 
 ## 安装
 
