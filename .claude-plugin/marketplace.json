@@ -1,0 +1,25 @@
+{
+  "name": "xiaochen-skills",
+  "owner": {
+    "name": "小陈",
+    "url": "https://github.com/chenhuajinchj"
+  },
+  "metadata": {
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "xiaochen-skills",
+      "description": "小陈的 Claude Code 技能集",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/davinci-subtitle-fixer",
+        "./skills/wechat-publisher",
+        "./skills/wechat-mosaic",
+        "./skills/cc-price-calculator"
+      ]
+    }
+  ]
+}

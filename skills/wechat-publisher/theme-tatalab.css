@@ -1,0 +1,747 @@
+/* TATALAB Style Theme for WeChat Official Account */
+/* Based on real TATALAB + 摸鱼小李 article styles, scraped via Playwright */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "PingFang SC", -apple-system, "system-ui", "Helvetica Neue", sans-serif;
+}
+
+/* === Container === */
+.article {
+  max-width: 578px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  background: #ffffff;
+  color: #333333;
+  line-height: 1.8;
+  letter-spacing: 0.5px;
+}
+
+/* === Hero Card (Personal Branding Card) === */
+.hero {
+  margin-bottom: 32px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: rgba(21, 101, 192, 0.35) 0 10px 40px -10px;
+}
+
+.hero-top {
+  background: linear-gradient(160deg, #1565C0 0%, #0D47A1 100%);
+  padding: 36px 28px 28px;
+  text-align: left;
+}
+
+.hero-tag {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #BBDEFB;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 14px;
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -1px;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.hero-line {
+  width: 36px;
+  height: 3px;
+  background: linear-gradient(to right, #64B5F6, #42A5F5);
+  border-radius: 2px;
+  margin-bottom: 12px;
+  display: block;
+  overflow: hidden;
+}
+
+.hero-subtitle {
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 4px;
+  font-weight: 400;
+}
+
+.hero-subtitle-secondary {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #BBDEFB;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+.hero-ip {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: rgba(0, 0, 0, 0.15) 0 2px 8px;
+}
+
+.hero-ip img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.hero-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+  margin-top: 24px;
+}
+
+.hero-author-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.5px;
+}
+
+.hero-author-tags {
+  display: flex;
+  gap: 6px;
+}
+
+.hero-author-tag {
+  font-size: 10px;
+  color: #BBDEFB;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* === Chapter Section (Horizontal Layout) === */
+.chapter {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+  margin-bottom: 24px;
+}
+
+.chapter-num {
+  font-size: 48px;
+  font-weight: 200;
+  color: #BBDEFB;
+  line-height: 1;
+  letter-spacing: -2px;
+  flex-shrink: 0;
+}
+
+.chapter-right {
+  flex: 1;
+}
+
+.chapter-tag {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1976D2;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.chapter-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1A1A1A;
+  line-height: 1.4;
+}
+
+/* === Headings === */
+h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1565C0;
+  letter-spacing: 1px;
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+
+.pill {
+  display: inline-block;
+  background: #F0F4FF;
+  border-radius: 20px;
+  padding: 4px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1565C0;
+  margin-bottom: 12px;
+}
+
+/* === Body Text === */
+p {
+  font-size: 17px;
+  line-height: 1.8;
+  letter-spacing: 0.5px;
+  color: #333333;
+  text-align: justify;
+  margin-bottom: 16px;
+}
+
+strong {
+  color: #1976D2;
+  font-weight: 700;
+}
+
+/* === Quote (Golden Sentence) === */
+.quote {
+  background: #F8FAFF;
+  border-left: 3px solid #1976D2;
+  border-radius: 0 8px 8px 0;
+  padding: 20px 24px;
+  margin: 20px 0;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #333333;
+}
+
+/* === Knowledge Card === */
+.card {
+  background: #F8FAFF;
+  border-left: 4px solid #1E88E5;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 20px 0;
+  box-shadow: rgba(0, 0, 0, 0.03) 0 2px 8px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1565C0;
+  margin-bottom: 12px;
+}
+
+.card-item {
+  margin-bottom: 10px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #444444;
+}
+
+.card-item strong {
+  color: #1976D2;
+  font-weight: 700;
+}
+
+/* === List Card === */
+.list-card {
+  border: 1px solid #E3F2FD;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 20px 0;
+}
+
+/* List items using p tags (WeChat-compatible) */
+.list-item {
+  margin-bottom: 10px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #555555;
+  text-align: left;
+}
+
+.list-dot {
+  color: #1976D2;
+  font-size: 8px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* === Image Card === */
+.img-card {
+  background: linear-gradient(145deg, #FAFAFA, #F5F8FA);
+  border-radius: 12px;
+  padding: 8px;
+  margin: 20px 0;
+  box-shadow: rgba(0, 0, 0, 0.04) 0 2px 8px, rgba(0, 0, 0, 0.06) 0 8px 24px;
+}
+
+.img-card img {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.img-card .img-caption {
+  text-align: center;
+  font-size: 13px;
+  color: #999999;
+  margin-top: 8px;
+  padding-bottom: 4px;
+}
+
+/* === Scroll Gallery (横向滑动图片组) === */
+.img-scroll {
+  margin: 20px 0;
+}
+
+.img-scroll-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+}
+
+.img-scroll-item {
+  flex: 0 0 85%;
+  scroll-snap-align: center;
+  background: linear-gradient(145deg, #FAFAFA, #F5F8FA);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: rgba(0, 0, 0, 0.04) 0 2px 8px, rgba(0, 0, 0, 0.06) 0 8px 24px;
+}
+
+.img-scroll-item img {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.img-scroll-item .img-caption {
+  text-align: center;
+  font-size: 13px;
+  color: #999999;
+  margin-top: 8px;
+  padding-bottom: 4px;
+}
+
+.img-scroll-hint {
+  text-align: center;
+  font-size: 12px;
+  color: #BBBBBB;
+  margin-top: 8px;
+  letter-spacing: 2px;
+}
+
+/* === Chat Bubbles === */
+.chat {
+  background: #F5F7FA;
+  border: 1px solid #EBEBEB;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.chat-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.chat-item:last-child {
+  margin-bottom: 0;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: #1565C0;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+}
+
+.chat-bubble {
+  background: #ffffff;
+  border-radius: 0 12px 12px 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333333;
+  flex: 1;
+  box-shadow: rgba(0, 0, 0, 0.04) 0 1px 3px;
+}
+
+.chat-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1565C0;
+  margin-bottom: 4px;
+}
+
+/* === Chat Table Fallback (for WeChat compatibility) === */
+.chat-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #F5F7FA;
+  border: 1px solid #EBEBEB;
+  border-radius: 16px;
+  margin: 20px 0;
+}
+
+.chat-table td {
+  padding: 12px;
+  vertical-align: top;
+  border: none;
+}
+
+.chat-table .avatar-cell {
+  width: 48px;
+  padding-right: 0;
+}
+
+/* === Divider === */
+hr {
+  border: none;
+  border-top: 1px solid #EEEEEE;
+  margin: 28px 0;
+}
+
+/* === Center Quote (Ending) === */
+.center-quote {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1976D2;
+  line-height: 1.8;
+  margin: 32px 0;
+  padding: 20px;
+}
+
+/* === Ordered List === */
+ol {
+  padding-left: 24px;
+  margin-bottom: 16px;
+}
+
+ol li {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #444444;
+  margin-bottom: 8px;
+}
+
+/* === Unordered List === */
+ul {
+  padding-left: 24px;
+  margin-bottom: 16px;
+}
+
+ul li {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #444444;
+  margin-bottom: 8px;
+}
+
+/* === Code Block === */
+pre {
+  background: #F5F7FA;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+code {
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 14px;
+  background: #F0F4FF;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #1565C0;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: #333333;
+}
+
+/* === Table === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 15px;
+}
+
+th {
+  background: #F0F4FF;
+  color: #1565C0;
+  font-weight: 700;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 2px solid #E3F2FD;
+}
+
+td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #F0F0F0;
+  color: #444444;
+  line-height: 1.6;
+}
+
+/* === Comparison Card === */
+.compare {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.compare-item {
+  flex: 1;
+  background: #F8FAFF;
+  border-radius: 12px;
+  padding: 20px;
+  border-top: 3px solid #1976D2;
+}
+
+.compare-item h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1565C0;
+  margin-bottom: 8px;
+}
+
+/* === Compare Table Fallback (for WeChat) === */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.compare-table td {
+  width: 50%;
+  background: #F8FAFF;
+  border-radius: 12px;
+  padding: 20px;
+  border-top: 3px solid #1976D2;
+  vertical-align: top;
+}
+
+/* === Footer Card === */
+.footer-card {
+  background: #F5F7FA;
+  border-radius: 12px;
+  padding: 28px 24px;
+  margin-top: 40px;
+  text-align: center;
+}
+
+.footer-author {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333333;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.footer-author strong {
+  color: #1976D2;
+}
+
+.footer-desc {
+  font-size: 13px;
+  color: #999999;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.footer-sign {
+  font-size: 12px;
+  color: #BBBBBB;
+  margin-top: 16px;
+}
+
+.footer-thanks {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #BBBBBB;
+  margin-top: 20px;
+  font-weight: 600;
+}
+
+/* === Callout (Functional Tip / Warning / Best Practice) === */
+.callout {
+  background: #F0F4FF;
+  border-left: 4px solid #1976D2;
+  border-radius: 0 8px 8px 0;
+  padding: 20px 24px;
+  margin: 20px 0;
+}
+
+.callout-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1565C0;
+  margin-bottom: 10px;
+}
+
+.callout p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #444444;
+  margin-bottom: 8px;
+}
+
+.callout p:last-child {
+  margin-bottom: 0;
+}
+
+.callout-warn {
+  background: #FFFDE7;
+  border-left-color: #F9A825;
+}
+
+.callout-warn .callout-title {
+  color: #E65100;
+}
+
+.callout-tip {
+  background: #F1F8E9;
+  border-left-color: #43A047;
+}
+
+.callout-tip .callout-title {
+  color: #2E7D32;
+}
+
+/* === Dark Card (Terminal / Core Rules) === */
+.card-dark {
+  background: #0D47A1;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0;
+  box-shadow: rgba(13, 71, 161, 0.3) 0 4px 16px;
+}
+
+.card-dark-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 16px;
+}
+
+.card-dark-item {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 10px;
+}
+
+.card-dark-item:last-child {
+  margin-bottom: 0;
+}
+
+/* === Steps List (Numbered Steps) === */
+.steps {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.steps td {
+  padding: 12px 0;
+  vertical-align: top;
+  border: none;
+  border-bottom: 1px solid #F0F0F0;
+}
+
+.steps tr:last-child td {
+  border-bottom: none;
+}
+
+.step-num-cell {
+  width: 48px;
+  padding-right: 16px;
+}
+
+.step-num {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  background: #1976D2;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 32px;
+  border-radius: 50%;
+}
+
+.step-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #444444;
+  margin: 0;
+}
+
+.step-text strong {
+  color: #1565C0;
+}
+
+/* === Grid Cards (2-column parallel concepts) === */
+.grid-cards {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 10px;
+  margin: 20px -10px;
+}
+
+.grid-card {
+  background: #F8FAFF;
+  border: 1px solid #E3F2FD;
+  border-radius: 12px;
+  padding: 20px;
+  vertical-align: top;
+  width: 50%;
+}
+
+.grid-card-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #1976D2;
+  padding: 2px 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.grid-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1565C0;
+  margin-bottom: 6px;
+}
+
+.grid-card-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #555555;
+  margin: 0;
+}

@@ -1,0 +1,45 @@
+# CC Price Calculator
+
+> A Claude Code Skill for calculating real-world costs of Claude AI subscriptions. It takes a subscription tier (Pro/Max 5×/Max 20×), number of people sharing the account (carpooling), and monthly price in CNY, then outputs per-person daily/weekly/monthly API quota in USD and the equivalent cost in CNY per USD of API usage. Supports cache hit rate adjustments and relay service pricing evaluation.
+
+## Core Capabilities
+
+- Calculate per-person quota splits for Claude subscription carpooling (拼车)
+- Convert Credits-based limits to USD equivalents
+- Factor in cache hit rates to show true effective value
+- Evaluate relay (中转) service pricing against subscription baselines
+- Rate deals on a 1-5 star scale based on cost-per-dollar benchmarks
+- Auto-append calculation records to Obsidian vault
+
+## Tech Stack
+
+- Claude Code Skill (SKILL.md format)
+- No external dependencies — pure prompt-driven calculation
+
+## Data Model
+
+```
+Subscription Tiers:
+  Pro ($20/mo):   550K Credits/5h,  5M Credits/week
+  Max 5× ($100):  3.3M Credits/5h, 41.7M Credits/week
+  Max 20× ($200): 11M Credits/5h,  83.3M Credits/week
+
+Conversion: 1M Credits = $7.5
+Cache: reads cost 0 Credits, default hit rate 82.9% → ×1.558 multiplier
+```
+
+## Usage
+
+```
+/CC价格计算 20× 三人拼 ¥600    → carpooling cost analysis
+/CC价格计算 中转 0.45元/刀       → relay pricing evaluation
+```
+
+## File Structure
+
+```
+cc-price-calculator/
+├── SKILL.md       # Core skill with calculation logic and data tables
+├── README.md      # Documentation
+└── llms.txt       # AI discovery file
+```
