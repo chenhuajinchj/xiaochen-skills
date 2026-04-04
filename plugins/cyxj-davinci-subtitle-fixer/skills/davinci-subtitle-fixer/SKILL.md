@@ -1,14 +1,13 @@
+---
+name: 字幕修正
+description: >
+  达芬奇字幕修正工具：SRT 清理、Gemini 语义初修、Opus 审查把关。
+  触发词：/字幕修正、修正字幕、字幕错别字、SRT 修正、达芬奇字幕。
+  当用户提供 SRT 文件路径需要修正时使用此 skill。
+version: 4.0.0
+---
+
 # 达芬奇字幕修正 Skill v4
-
-<command-name>字幕修正</command-name>
-
-<trigger>
-Use when user mentions:
-- `/字幕修正`
-- "修正字幕", "字幕错别字", "SRT 修正"
-- "达芬奇字幕", "DaVinci subtitle"
-- Provides an SRT file path for correction
-</trigger>
 
 ## 路径约定
 

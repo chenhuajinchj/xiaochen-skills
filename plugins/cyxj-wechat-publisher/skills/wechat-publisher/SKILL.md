@@ -1,18 +1,19 @@
+---
+name: 公众号排版
+description: >
+  将 Obsidian Markdown 文章转换为 TATALAB 风格的高质量公众号排版。
+  支持内容审查、打磨、IP 配图生成、预览确认，输出可直接粘贴到微信后台。
+  触发词：发布到公众号、公众号排版、微信发布、排版文章、XCYJ 排版。
+version: 1.0.0
+---
+
 # XCYJ WeChat Publisher - 陈与小金公众号排版发布 Skill
-
-## Trigger
-
-"发布到公众号"、"公众号排版"、"微信发布"、"发布微信"、"排版文章"、"XCYJ 排版"
-
-## Description
-
-将 Obsidian Markdown 文章转换为 TATALAB 风格的高质量公众号排版，支持内容审查、打磨、根据文章题材智能匹配视觉方案的 IP 配图生成、预览确认，最终输出可直接复制粘贴到微信后台的排版内容。XCYJ（陈与小金）品牌视觉体系。
 
 ## Files
 
-- `~/.cc-switch/skills/wechat-publisher/theme-tatalab.css` - TATALAB 风格 CSS 主题
-- `~/.cc-switch/skills/wechat-publisher/preview-template.html` - 预览 HTML 模板
-- `~/.cc-switch/skills/wechat-publisher/package.json` - npm 依赖（仅 juice）
+- `${CLAUDE_PLUGIN_ROOT}/theme-tatalab.css` - TATALAB 风格 CSS 主题
+- `${CLAUDE_PLUGIN_ROOT}/preview-template.html` - 预览 HTML 模板
+- `${CLAUDE_PLUGIN_ROOT}/package.json` - npm 依赖（仅 juice）
 
 ## Workflow
 
@@ -137,7 +138,7 @@ npx -y bun ~/.agents/skills/pw-image-generation/scripts/cover-generator.ts --pla
 1. Run juice to inline all CSS styles:
 
 ```bash
-cd ~/.cc-switch/skills/wechat-publisher && node -e "
+cd ${CLAUDE_PLUGIN_ROOT} && node -e "
 const juice = require('juice');
 const fs = require('fs');
 const css = fs.readFileSync('theme-tatalab.css', 'utf8');
