@@ -5,8 +5,8 @@
     "url": "https://github.com/chenhuajinchj"
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译",
-    "version": "1.1.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计",
+    "version": "1.2.0"
   },
   "plugins": [
     {
@@ -33,6 +33,11 @@
       "name": "cyxj-obsidian-compiler",
       "description": "Obsidian 知识库编译：Wiki 概念页、反向链接、日记提炼、健康度检查",
       "source": "./plugins/cyxj-obsidian-compiler"
+    },
+    {
+      "name": "cyxj-poster-design",
+      "description": "海报设计：33+ 大师风格 + 10 摄影风格，支持 IP 角色参考图、文字渲染、多比例输出",
+      "source": "./plugins/cyxj-poster-design"
     }
   ]
 }
