@@ -5,8 +5,8 @@
     "url": "https://github.com/chenhuajinchj"
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计",
-    "version": "1.2.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计、YouTube 选题发现、Notebook LM 研究",
+    "version": "1.3.0"
   },
   "plugins": [
     {
@@ -38,6 +38,16 @@
       "name": "cyxj-poster-design",
       "description": "海报设计：33+ 大师风格 + 10 摄影风格，支持 IP 角色参考图、文字渲染、多比例输出",
       "source": "./plugins/cyxj-poster-design"
+    },
+    {
+      "name": "cyxj-youtube-topic-discovery",
+      "description": "YouTube 选题发现：搜索最近 48 小时新视频，话题聚类后写入 Obsidian 选题库",
+      "source": "./plugins/cyxj-youtube-topic-discovery"
+    },
+    {
+      "name": "cyxj-notebook-research",
+      "description": "Notebook LM 批量研究：将选题库视频提交 Google Notebook LM，拉取转录稿和报告",
+      "source": "./plugins/cyxj-notebook-research"
     }
   ]
 }
