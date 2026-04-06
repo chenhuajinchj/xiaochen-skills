@@ -1,5 +1,5 @@
 ---
-name: wechat-mosaic
+name: cyxj-wechat-mask
 description: "Batch mosaic/blur sensitive regions in WeChat chat screenshots, then auto-generate 朋友圈 promotional posts. Use this skill when the user wants to censor, mask, blur, or mosaic WeChat chat screenshots, or when they mention '打码', '马赛克', '模糊处理', '朋友圈文案', '隐私保护', '截图处理', '发朋友圈' for chat screenshots. Also trigger when the user has a folder of WeChat screenshots and wants to redact personal information like avatars, nicknames, names, or company names before sharing."
 version: 1.0.0
 ---

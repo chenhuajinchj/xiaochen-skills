@@ -1,5 +1,5 @@
 ---
-name: 字幕修正
+name: cyxj-subfix
 description: >
   达芬奇字幕修正工具：SRT 清理、Gemini 语义初修、Opus 审查把关。
   触发词：/字幕修正、修正字幕、字幕错别字、SRT 修正、达芬奇字幕。

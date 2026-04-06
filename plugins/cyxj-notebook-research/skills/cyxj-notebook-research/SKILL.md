@@ -1,5 +1,5 @@
 ---
-name: notebook-research
+name: cyxj-notebook-research
 description: |
   Notebook LM 批量研究。将选题库中的 YouTube 视频提交给 Google Notebook LM，
   拉取转录稿和综合报告，写入 Obsidian 研究报告目录。

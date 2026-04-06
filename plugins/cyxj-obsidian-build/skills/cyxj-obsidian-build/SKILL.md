@@ -1,5 +1,5 @@
 ---
-name: Obsidian 知识库编译
+name: cyxj-obsidian-build
 description: >
   基于 Karpathy LLM Wiki 方法论，将 Obsidian 库编译成三层知识架构。
   支持 Ingest（摄入）、Query（查询）、Lint（检查）三大操作。

@@ -1,5 +1,5 @@
 ---
-name: CC价格计算
+name: cyxj-cc-price
 description: Claude 订阅/拼车/中转成本计算器。输入套餐类型、人数、价格，自动计算日/周/月限额和元/刀采购价，结果存入 Obsidian。触发词："CC价格计算"、"算一下拼车"、"中转多少钱合理"。
 ---
 

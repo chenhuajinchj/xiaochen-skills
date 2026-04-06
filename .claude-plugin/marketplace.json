@@ -6,43 +6,43 @@
   },
   "metadata": {
     "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计、YouTube 选题发现、Notebook LM 研究",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "plugins": [
     {
-      "name": "cyxj-davinci-subtitle-fixer",
+      "name": "cyxj-subfix",
       "description": "达芬奇字幕修正工具：SRT 清理、Gemini 初修、Opus 审查",
-      "source": "./plugins/cyxj-davinci-subtitle-fixer"
+      "source": "./plugins/cyxj-subfix"
     },
     {
-      "name": "cyxj-wechat-publisher",
+      "name": "cyxj-wechat-pub",
       "description": "公众号排版发布：Obsidian MD → TATALAB 风格 HTML → 微信后台",
-      "source": "./plugins/cyxj-wechat-publisher"
+      "source": "./plugins/cyxj-wechat-pub"
     },
     {
-      "name": "cyxj-wechat-mosaic",
+      "name": "cyxj-wechat-mask",
       "description": "微信截图批量打码：头像、昵称、人名自动马赛克",
-      "source": "./plugins/cyxj-wechat-mosaic"
+      "source": "./plugins/cyxj-wechat-mask"
     },
     {
-      "name": "cyxj-cc-price-calculator",
+      "name": "cyxj-cc-price",
       "description": "Claude 订阅/拼车/中转成本计算器",
-      "source": "./plugins/cyxj-cc-price-calculator"
+      "source": "./plugins/cyxj-cc-price"
     },
     {
-      "name": "cyxj-obsidian-compiler",
+      "name": "cyxj-obsidian-build",
       "description": "Obsidian 知识库编译：Wiki 概念页、反向链接、日记提炼、健康度检查",
-      "source": "./plugins/cyxj-obsidian-compiler"
+      "source": "./plugins/cyxj-obsidian-build"
     },
     {
-      "name": "cyxj-poster-design",
+      "name": "cyxj-poster",
       "description": "海报设计：33+ 大师风格 + 10 摄影风格，支持 IP 角色参考图、文字渲染、多比例输出",
-      "source": "./plugins/cyxj-poster-design"
+      "source": "./plugins/cyxj-poster"
     },
     {
-      "name": "cyxj-youtube-topic-discovery",
+      "name": "cyxj-youtube-topics",
       "description": "YouTube 选题发现：搜索最近 48 小时新视频，话题聚类后写入 Obsidian 选题库",
-      "source": "./plugins/cyxj-youtube-topic-discovery"
+      "source": "./plugins/cyxj-youtube-topics"
     },
     {
       "name": "cyxj-notebook-research",

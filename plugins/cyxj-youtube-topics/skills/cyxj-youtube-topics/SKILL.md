@@ -1,5 +1,5 @@
 ---
-name: youtube-topic-discovery
+name: cyxj-youtube-topics
 description: |
   YouTube 选题发现。搜索 "Claude Code" 和 "AI coding" 的最近 48 小时新视频，
   去重后按话题聚类，写入 Obsidian 选题库。
