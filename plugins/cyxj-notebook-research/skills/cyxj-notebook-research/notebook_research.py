@@ -396,44 +396,76 @@ def cmd_fetch(topic_file: Path):
         print(json.dumps(summary, ensure_ascii=False, indent=2))
         sys.exit(1)
 
-    print(f"{len(done_sources)} 个源已索引完成，开始拉取...", file=sys.stderr)
+    print(f"{len(done_sources)} 个源已索引完成，开始生成报告...", file=sys.stderr)
 
-    # 5. 提取每个已完成视频的转录（跳过失败的源）
-    transcripts = []
-    for source in done_sources:
-        source_id = source.get("id", "")
-        source_title = source.get("title", source_id)
-        if not source_id:
-            continue
-        print(f"  拉取转录: {source_title}", file=sys.stderr)
-        result = run_notebooklm(["source", "fulltext", source_id], timeout=90)
-        if result.returncode == 0 and result.stdout.strip():
-            transcripts.append({
-                "title": source_title,
-                "content": result.stdout.strip(),
-            })
-        else:
-            print(f"  警告：无法获取 {source_title} 的转录", file=sys.stderr)
-            transcripts.append({
-                "title": source_title,
-                "content": "（转录获取失败）",
-            })
-
-    # 6. 生成综合报告（超时 300 秒）
-    print("  生成综合报告...", file=sys.stderr)
+    # 5. 生成综合报告（异步：触发 → 轮询 → 下载）
+    print("  触发综合报告生成...", file=sys.stderr)
     result = run_notebooklm(["generate", "report", "--format", "briefing-doc"], timeout=300)
     briefing = ""
+
+    # 从输出中提取任务 ID
+    task_id = None
     if result.returncode == 0 and result.stdout.strip():
-        briefing = result.stdout.strip()
-    else:
-        print("  警告：综合报告生成失败", file=sys.stderr)
+        output = result.stdout.strip()
+        # 检查是否为异步任务 ID（格式: "Started: <uuid>"）
+        started_match = re.search(r"Started:\s*([0-9a-f-]{36})", output, re.IGNORECASE)
+        if started_match:
+            task_id = started_match.group(1)
+        else:
+            # 如果直接返回了内容（非异步），直接使用
+            briefing = output
+
+    if task_id:
+        # 轮询等待报告生成完成
+        print(f"  报告生成中（任务 {task_id[:8]}...），等待完成...", file=sys.stderr)
+        max_polls = 30  # 最多等 5 分钟（30 × 10 秒）
+        for attempt in range(max_polls):
+            time.sleep(10)
+            poll_result = run_notebooklm(["artifact", "poll", task_id], timeout=30)
+            if poll_result.returncode == 0 and "completed" in poll_result.stdout.lower():
+                print("  报告生成完成", file=sys.stderr)
+                break
+            if poll_result.returncode != 0 or "failed" in poll_result.stdout.lower():
+                print("  警告：报告生成失败", file=sys.stderr)
+                break
+        else:
+            print("  警告：报告生成超时（5 分钟）", file=sys.stderr)
+
+        # 下载报告内容
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".md", delete=False, mode="w") as tmp:
+            tmp_path = tmp.name
+        dl_result = run_notebooklm(
+            ["download", "report", "-a", task_id, "--force", tmp_path], timeout=60
+        )
+        if dl_result.returncode == 0:
+            try:
+                briefing = Path(tmp_path).read_text(encoding="utf-8").strip()
+                print(f"  报告已下载（{len(briefing)} 字符）", file=sys.stderr)
+            except Exception:
+                print("  警告：无法读取下载的报告文件", file=sys.stderr)
+        else:
+            print("  警告：报告下载失败", file=sys.stderr)
+        # 清理临时文件
+        try:
+            Path(tmp_path).unlink(missing_ok=True)
+        except Exception:
+            pass
+
+    if not briefing:
         briefing = "（综合报告生成失败）"
 
-    # 7. 写入研究报告文件
+    # 6. 写入研究报告文件
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     report_file = REPORT_DIR / f"{topic_name}.md"
 
     today = date.today().isoformat()
+    # 收集视频来源信息
+    source_lines = []
+    for source in done_sources:
+        source_title = source.get("title", source.get("id", "未知"))
+        source_lines.append(f"- {source_title}")
+
     report_lines = [
         "---",
         "source: ai-research",
@@ -442,15 +474,11 @@ def cmd_fetch(topic_file: Path):
         f"notebook_id: {notebook_id}",
         "---",
         "",
-        "## 视频转录",
+        "## 视频来源",
         "",
     ]
-
-    for t in transcripts:
-        report_lines.append(f"### {t['title']}")
-        report_lines.append("")
-        report_lines.append(t["content"])
-        report_lines.append("")
+    report_lines.extend(source_lines)
+    report_lines.append("")
 
     # 标注失败的源
     if failed_sources:
@@ -462,8 +490,6 @@ def cmd_fetch(topic_file: Path):
         report_lines.append("")
 
     report_lines.append("---")
-    report_lines.append("")
-    report_lines.append("## 综合报告")
     report_lines.append("")
     report_lines.append(briefing)
     report_lines.append("")
@@ -483,7 +509,7 @@ def cmd_fetch(topic_file: Path):
         "action": "fetch",
         "status": "completed",
         "topic": topic_name,
-        "transcripts_count": len([t for t in transcripts if t["content"] != "（转录获取失败）"]),
+        "sources_count": len(done_sources),
         "failed_sources_count": len(failed_sources),
         "report_file": str(report_file),
         "has_briefing": briefing != "（综合报告生成失败）",

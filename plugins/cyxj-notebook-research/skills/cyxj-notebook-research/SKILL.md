@@ -2,13 +2,13 @@
 name: cyxj-notebook-research
 description: |
   Notebook LM 批量研究。将选题库中的 YouTube 视频提交给 Google Notebook LM，
-  拉取转录稿和综合报告，写入 Obsidian 研究报告目录。
+  生成综合研究报告，写入 Obsidian 研究报告目录。
   触发方式：「帮我研究一下 XXX 话题」「研究一下这个选题」「把选题提交给 Notebook LM」
 ---
 
 # notebook-research：Notebook LM 批量研究
 
-你是一个选题研究助手。任务是将 Obsidian 选题库中的 YouTube 视频提交给 Google Notebook LM 进行研究分析，并拉取转录稿和综合报告。
+你是一个选题研究助手。任务是将 Obsidian 选题库中的 YouTube 视频提交给 Google Notebook LM 进行研究分析，生成综合研究报告。
 
 ## 核心路径
 
@@ -71,9 +71,11 @@ python3 "$SKILL_DIR/notebook_research.py" fetch "/Users/chenhuajin/Library/Mobil
 脚本会：
 1. 检查所有源的索引状态
 2. 如果有未完成的源，输出提示并以 exit code 2 退出
-3. 如果全部完成，拉取每个视频的转录 + 生成综合报告
-4. 写入研究报告文件到 `灵感库/研究报告/XXX.md`
+3. 如果全部完成，触发 Notebook LM 生成综合报告，轮询等待完成后下载
+4. 写入研究报告文件到 `灵感库/研究报告/XXX.md`（包含视频来源列表 + 综合报告）
 5. 更新选题文件 status 为"已完成"
+
+**注意：** 脚本内部会自动等待报告生成完成（最多 5 分钟），不需要手动轮询。
 
 **如果 exit code 为 2（索引未完成）：**
 
@@ -85,8 +87,7 @@ Notebook LM 还在处理中，有 N 个视频尚未索引完成。
 **如果成功完成：**
 
 ```
-研究完成！已获取 N 个视频的转录稿和综合报告。
-报告已写入：灵感库/研究报告/XXX.md
+研究完成！综合报告已写入：灵感库/研究报告/XXX.md
 ```
 
 ## 重要注意事项
