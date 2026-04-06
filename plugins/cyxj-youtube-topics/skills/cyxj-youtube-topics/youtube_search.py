@@ -152,12 +152,13 @@ def enrich_and_filter(api_key: str, videos: list[dict]) -> list[dict]:
     video_ids = [v["video_id"] for v in videos]
     stats_map = {}
     duration_map = {}
+    lang_map = {}
 
     for i in range(0, len(video_ids), 50):
         batch = video_ids[i:i + 50]
         resp = requests.get(f"{API_BASE}/videos", params={
             "key": api_key,
-            "part": "statistics,contentDetails",
+            "part": "statistics,contentDetails,snippet",
             "id": ",".join(batch),
         }, timeout=30)
         resp.raise_for_status()
@@ -165,17 +166,27 @@ def enrich_and_filter(api_key: str, videos: list[dict]) -> list[dict]:
             vid = item["id"]
             stats_map[vid] = int(item["statistics"].get("viewCount", 0))
             duration_map[vid] = parse_duration(item["contentDetails"].get("duration", "PT0S"))
+            # 语言：优先 defaultAudioLanguage，其次 defaultLanguage
+            snippet = item.get("snippet", {})
+            lang = snippet.get("defaultAudioLanguage") or snippet.get("defaultLanguage") or ""
+            lang_map[vid] = lang.lower()
 
     for video in videos:
         video["view_count"] = stats_map.get(video["video_id"], 0)
         video["duration_seconds"] = duration_map.get(video["video_id"], 0)
+        video["language"] = lang_map.get(video["video_id"], "")
 
     # 硬过滤
     filtered = []
     for v in videos:
         title = v["title"]
 
-        # 非英文标题
+        # 语言过滤：只保留英语（en, en-US, en-GB 等）或未标注语言的视频
+        lang = v.get("language", "")
+        if lang and not lang.startswith("en"):
+            continue
+
+        # 非英文字符集（兜底：拦截 CJK、俄文等未标注语言的非英文视频）
         if NON_ENGLISH_PATTERN.search(title):
             continue
 

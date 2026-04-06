@@ -26,6 +26,7 @@ python3 "$SKILL_DIR/youtube_search.py"
 - `description`：视频描述
 - `relative_time`：相对时间（如"2小时前"）
 - `view_count_formatted`：格式化播放量（如"1.2万"）
+- `duration_formatted`：格式化时长（如"12分30秒"）
 
 ### 第二步：判断结果
 
@@ -37,6 +38,7 @@ python3 "$SKILL_DIR/youtube_search.py"
 1. 根据标题和描述的语义相似性分组
 2. 每组起一个简洁的中文话题名（如"Claude Code + MCP"、"AI 编程工具对比"）
 3. 独立话题的视频单独成组也可以
+4. **每个话题组内的视频按 published_at 从新到旧排序**
 
 构造如下 JSON 格式：
 
@@ -50,7 +52,8 @@ python3 "$SKILL_DIR/youtube_search.py"
         "url": "https://www.youtube.com/watch?v=...",
         "channel": "频道名",
         "relative_time": "2小时前",
-        "view_count_formatted": "1.2万"
+        "view_count_formatted": "1.2万",
+        "duration_formatted": "12分30秒"
       }
     ]
   }
@@ -74,13 +77,17 @@ rm /tmp/youtube_topics.json
 
 **重要：不要用 `echo '...'` 管道传 JSON。** 视频标题中的英文单引号（如 Let's、Claude's）会导致 Shell 解析错误。必须先写文件再读取。
 
+脚本会生成一个总览文件（如 `2026-04-06 10-15 YouTube选题总览.md`），包含所有话题和视频。
+
 ### 第五步：回复用户
 
-根据写入脚本的输出，告诉用户找到了几个新话题：
+根据写入脚本的输出，告诉用户结果：
 
 ```
-找到 X 个新话题，已写入选题库：
+找到 X 个新话题（共 N 个视频），已写入选题库：
 
 1. **话题名** — N 个视频
 2. **话题名** — N 个视频
+
+文件：YYYY-MM-DD HH-MM YouTube选题总览.md
 ```
