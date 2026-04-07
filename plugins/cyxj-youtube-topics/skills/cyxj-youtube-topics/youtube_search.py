@@ -11,13 +11,17 @@ import requests
 
 # ── 常量 ──────────────────────────────────────────────
 
-# 第一段：召回关键词（品牌词 + 行为词 + 技术词）
+# 第一段：召回关键词（大词 + 受众词 + 功能词 + 内容类型词）
 KEYWORDS = [
-    "Claude Code",
-    "Claude Code tutorial",
-    "Claude Code MCP",
-    "Claude Code agent",
-    "Claude Code workflow",
+    "Claude Code",              # 兜底大词
+    "Claude Code tutorial",     # 教程类
+    "Claude Code beginner",     # 新手向
+    "Claude Code plan",         # 功能更新
+    "Claude Code skills",       # 功能特性
+    "Claude Code agent",        # 热点话题
+    "Claude Code MCP",          # 生态热点
+    "Claude Code build",        # 实战展示
+    "Claude Code update",       # 资讯更新
 ]
 HOURS_WINDOW = 48
 MAX_RESULTS_PER_KEYWORD = 50  # 拉满上限，search.list 无论取多少条都扣 100 点
@@ -180,6 +184,11 @@ def enrich_and_filter(api_key: str, videos: list[dict]) -> list[dict]:
     filtered = []
     for v in videos:
         title = v["title"]
+
+        # 相关性过滤：标题或描述必须包含 "Claude Code"（不区分大小写）
+        text = (title + " " + v.get("description", "")).lower()
+        if "claude code" not in text:
+            continue
 
         # 语言过滤：只保留英语（en, en-US, en-GB 等）或未标注语言的视频
         lang = v.get("language", "")
