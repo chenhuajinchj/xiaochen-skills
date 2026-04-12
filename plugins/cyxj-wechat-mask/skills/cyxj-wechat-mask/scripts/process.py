@@ -412,36 +412,40 @@ def main():
         filename = os.path.basename(img_path)
         output_path = os.path.join(output_dir, filename)
 
-        t0 = time.time()
-        regions, ocr_texts, conversation = process_image(img_path, output_path, ocr, pseg)
-        elapsed = time.time() - t0
+        try:
+            t0 = time.time()
+            regions, ocr_texts, conversation = process_image(img_path, output_path, ocr, pseg)
+            elapsed = time.time() - t0
 
-        # Summarize
-        avatar_count = sum(1 for r in regions if r.get("label") == "left_avatar")
-        title_count = sum(1 for r in regions if r.get("label") == "nav_title")
-        text_labels = [r["label"] for r in regions if r.get("label", "").startswith("text:")]
+            # Summarize
+            avatar_count = sum(1 for r in regions if r.get("label") == "left_avatar")
+            title_count = sum(1 for r in regions if r.get("label") == "nav_title")
+            text_labels = [r["label"] for r in regions if r.get("label", "").startswith("text:")]
 
-        print(f"[{i}/{len(image_files)}] {filename}")
-        if conversation:
-            print(f"  Conversation: {conversation}")
-        print(f"  Avatars: {avatar_count}, Title: {'yes' if title_count else 'no'}, "
-              f"Text entities: {len(text_labels)}")
-        if text_labels:
-            names = [l.replace("text:", "") for l in text_labels]
-            print(f"  Masked text: {', '.join(names)}")
-        print(f"  Time: {elapsed:.2f}s → {output_path}")
-        print()
+            print(f"[{i}/{len(image_files)}] {filename}")
+            if conversation:
+                print(f"  Conversation: {conversation}")
+            print(f"  Avatars: {avatar_count}, Title: {'yes' if title_count else 'no'}, "
+                  f"Text entities: {len(text_labels)}")
+            if text_labels:
+                names = [l.replace("text:", "") for l in text_labels]
+                print(f"  Masked text: {', '.join(names)}")
+            print(f"  Time: {elapsed:.2f}s → {output_path}")
+            print()
 
-        results.append({
-            "file": filename,
-            "conversation": conversation,
-            "regions": len(regions),
-            "avatars": avatar_count,
-            "title": title_count > 0,
-            "text_entities": text_labels,
-            "ocr_text": ocr_texts,
-            "time": round(elapsed, 2),
-        })
+            results.append({
+                "file": filename,
+                "conversation": conversation,
+                "regions": len(regions),
+                "avatars": avatar_count,
+                "title": title_count > 0,
+                "text_entities": text_labels,
+                "ocr_text": ocr_texts,
+                "time": round(elapsed, 2),
+            })
+        except Exception as e:
+            print(f"[{i}/{len(image_files)}] {filename} — 处理失败，跳过: {e}")
+            print()
 
     total_elapsed = time.time() - total_start
 

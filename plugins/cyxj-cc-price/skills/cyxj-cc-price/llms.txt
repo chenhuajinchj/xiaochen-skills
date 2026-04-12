@@ -38,7 +38,7 @@ Cache: reads cost 0 Credits, default hit rate 82.9% → ×1.558 multiplier
 ## File Structure
 
 ```
-cc-price-calculator/
+cyxj-cc-price/
 ├── SKILL.md       # Core skill with calculation logic and data tables
 ├── README.md      # Documentation
 └── llms.txt       # AI discovery file

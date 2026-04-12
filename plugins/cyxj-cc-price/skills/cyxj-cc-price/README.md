@@ -26,7 +26,10 @@ User Input                    Calculation Engine              Output
 
 ## Quick Start
 
-1. Copy `SKILL.md` to `~/.claude/skills/cc-price-calculator/`
+1. Install via marketplace:
+   ```bash
+   /plugin marketplace add chenhuajinchj/xiaochen-skills
+   ```
 2. Use in Claude Code: `/CC价格计算 20× 三人拼 ¥550`
 
 ## Usage Examples

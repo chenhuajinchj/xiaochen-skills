@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WeChat Article Preview</title>
+  <title>公众号文章预览</title>
   <style>
     body {
       background: #F2F2F2;
@@ -63,14 +63,14 @@
 </head>
 <body>
   <div class="phone-frame">
-    <div class="phone-header">WeChat Article Preview</div>
+    <div class="phone-header">公众号文章预览</div>
     <div id="output">
       {{CONTENT}}
     </div>
   </div>
 
   <div class="copy-bar">
-    <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+    <button class="copy-btn" onclick="copyToClipboard()">复制到剪贴板</button>
   </div>
 
   <script>
@@ -83,10 +83,10 @@
         await navigator.clipboard.write([
           new ClipboardItem({ 'text/html': blob })
         ]);
-        btn.textContent = 'Copied!';
+        btn.textContent = '已复制！';
         btn.classList.add('copied');
         setTimeout(() => {
-          btn.textContent = 'Copy to Clipboard';
+          btn.textContent = '复制到剪贴板';
           btn.classList.remove('copied');
         }, 2000);
       } catch (err) {
@@ -98,10 +98,10 @@
         sel.addRange(range);
         document.execCommand('copy');
         sel.removeAllRanges();
-        btn.textContent = 'Copied (fallback)!';
+        btn.textContent = '已复制！';
         btn.classList.add('copied');
         setTimeout(() => {
-          btn.textContent = 'Copy to Clipboard';
+          btn.textContent = '复制到剪贴板';
           btn.classList.remove('copied');
         }, 2000);
       }

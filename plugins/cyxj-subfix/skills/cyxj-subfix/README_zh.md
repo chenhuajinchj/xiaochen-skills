@@ -51,9 +51,7 @@ pip install google-genai pysrt
 ### 作为 Claude Code Skill 安装（推荐）
 
 ```bash
-# 克隆到 Claude Code skills 目录
-git clone https://github.com/chenhuajinchj/davinci-subtitle-fixer.git \
-  ~/.claude/skills/davinci-subtitle-fixer
+/plugin marketplace add chenhuajinchj/xiaochen-skills
 ```
 
 在 Claude Code 中使用：

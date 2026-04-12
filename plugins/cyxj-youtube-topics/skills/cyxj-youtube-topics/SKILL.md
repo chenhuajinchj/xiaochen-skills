@@ -1,9 +1,9 @@
 ---
 name: cyxj-youtube-topics
 description: |
-  YouTube 选题发现。搜索 "Claude Code" 和 "AI coding" 的最近 48 小时新视频，
+  YouTube 选题发现。搜索 "Claude Code" 相关的最近 48 小时新视频，
   去重后按话题聚类，写入 Obsidian 选题库。
-  触发方式：「帮我找找最近的新选题」「跑一下选题发现」「有什么新视频」
+  触发方式：「选题」「找选题」「YouTube 最近有什么」「帮我找找最近的新选题」「跑一下选题发现」「有什么新视频」
 ---
 
 # youtube-topic-discovery：YouTube 选题发现

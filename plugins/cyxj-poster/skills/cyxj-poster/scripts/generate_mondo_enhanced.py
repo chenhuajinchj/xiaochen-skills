@@ -20,11 +20,11 @@ DEFAULT_IMAGE_MODEL = 'gemini-3.1-flash-image-preview'
 DEFAULT_TEXT_MODEL = 'gemini-3.1-flash-lite-preview'
 
 # Photography styles that use photorealistic base instead of Mondo poster base
-PHOTO_STYLES = {
+PHOTO_STYLES = (
     "ccd-flash", "kodak-portra", "tyndall-forest", "studio-afternoon",
     "cyberpunk-neon", "snow-cabin", "vintage-library", "cherry-blossom",
     "desert-sunset", "classical-garden"
-}
+)
 
 # 33+ Design Styles: Poster Artists + Book Cover + Album Cover + Social Media + Photography
 ARTIST_STYLES = {
@@ -430,7 +430,7 @@ def generate_comparison(subject, design_type, styles, aspect_ratio="9:16", color
         for img_path in images:
             try:
                 os.remove(img_path)
-            except:
+            except Exception:
                 pass
 
         print(f"\n✅ Comparison saved to {comparison_path}")

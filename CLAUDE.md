@@ -68,11 +68,11 @@ cat .claude-plugin/marketplace.json | python3 -c "import sys,json; [print(p['nam
 
 | Skill | 核心技术 | 外部依赖 |
 |-------|---------|---------|
-| cyxj-subfix | Python + Gemini API + Opus 审查 | google-generativeai |
+| cyxj-subfix | Python + Gemini API + Opus 审查 | google-genai, pysrt |
 | cyxj-wechat-pub | CSS + HTML 模板 + juice（npm） | juice (npm) |
-| cyxj-wechat-mask | Python (OpenCV/Pillow) | opencv-python, pillow |
+| cyxj-wechat-mask | Python (CnOCR/Pillow/jieba) | pillow, cnocr, onnxruntime, jieba |
 | cyxj-cc-price | 纯 SKILL.md 指令 | 无 |
 | cyxj-obsidian-build | 纯 SKILL.md 指令 | Obsidian 库访问 |
 | cyxj-poster | Python + Gemini API | google-genai, pillow |
-| cyxj-youtube-topics | Python + YouTube Data API | google-api-python-client |
-| cyxj-notebook-research | Python + Notebook LM | playwright（浏览器自动化） |
+| cyxj-youtube-topics | Python + YouTube Data API | requests |
+| cyxj-notebook-research | Python + Notebook LM | notebooklm-py, python-frontmatter |

@@ -51,9 +51,7 @@ pip install google-genai pysrt
 ### As a Claude Code Skill (Recommended)
 
 ```bash
-# Clone to Claude Code skills directory
-git clone https://github.com/chenhuajinchj/davinci-subtitle-fixer.git \
-  ~/.claude/skills/davinci-subtitle-fixer
+/plugin marketplace add chenhuajinchj/xiaochen-skills
 ```
 
 Then use it in Claude Code:

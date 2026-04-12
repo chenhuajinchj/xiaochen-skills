@@ -101,11 +101,14 @@ Obsidian .md
 **IP 形象核心特征（每次生成必须强调）**：光头、蓝色卫衣写着"陈与小金"、金链耳饰、蓝眼睛。
 
 **图床上传流程**（Lsky Pro - img.xiaochens.com）：
+
+> 图床认证需要环境变量 `LSKY_EMAIL` 和 `LSKY_PASSWORD`。如果未设置，提示用户先配置。
+
 ```bash
 # 1. 获取 token
 curl -s -X POST "https://img.xiaochens.com/api/v1/tokens" \
   -H "Content-Type: application/json" \
-  -d '{"email":"chenyuxiaojin@gmail.com","password":"xxx"}'
+  -d "{\"email\":\"$LSKY_EMAIL\",\"password\":\"$LSKY_PASSWORD\"}"
 # 返回: {"data":{"token":"1|xxxxx"}}
 
 # 2. 上传图片
@@ -136,6 +139,10 @@ npx -y bun ~/.agents/skills/pw-image-generation/scripts/cover-generator.ts --pla
 ### Phase 4: CSS 内联 + 预览确认
 
 1. Run juice to inline all CSS styles:
+
+```bash
+cd ${CLAUDE_PLUGIN_ROOT} && { [ -d node_modules ] || npm install; }
+```
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT} && node -e "

@@ -5,6 +5,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import date
 from pathlib import Path
@@ -432,7 +433,6 @@ def cmd_fetch(topic_file: Path):
             print("  警告：报告生成超时（5 分钟）", file=sys.stderr)
 
         # 下载报告内容
-        import tempfile
         with tempfile.NamedTemporaryFile(suffix=".md", delete=False, mode="w") as tmp:
             tmp_path = tmp.name
         dl_result = run_notebooklm(

@@ -1,0 +1,2 @@
+notebooklm-py
+python-frontmatter

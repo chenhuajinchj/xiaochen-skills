@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SRT 字幕结构清理工具 - 达芬奇字幕修正 Skill v3
+"""SRT 字幕结构清理工具 - 达芬奇字幕修正 Skill v4
 
 处理流程：strip_html → deduplicate → replace_punctuation → merge_short → split_long → renumber
 导出功能：--export-txt 从 SRT 提取纯文本供 IntelliScript 使用
