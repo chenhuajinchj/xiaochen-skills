@@ -16,12 +16,89 @@ TOPIC_DIR = (
     / "选题库"
 )
 INDEX_PATH = TOPIC_DIR / "话题索引.json"
+CREATOR_PATH = TOPIC_DIR / "创作者索引.json"
 
 # 状态判断阈值
 RISING_MIN_APPEARANCES = 2
 SATURATED_MIN_APPEARANCES = 4
 SATURATED_MIN_VIDEOS = 10
 STALE_DAYS = 5
+
+# 创作者优质判断阈值
+QUALITY_AVG_VIEWS = 5000
+QUALITY_MAX_VIEWS = 20000
+
+
+def load_creators() -> dict:
+    """加载创作者索引"""
+    if CREATOR_PATH.exists():
+        try:
+            return json.loads(CREATOR_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"creators": {}}
+
+
+def save_creators(data: dict):
+    """保存创作者索引"""
+    CREATOR_PATH.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def parse_view_count(formatted: str) -> int:
+    """解析格式化播放量回数字：1.4万→14000, 7.0千→7000, 662→662"""
+    formatted = formatted.strip()
+    if formatted.endswith("万"):
+        return int(float(formatted[:-1]) * 10000)
+    elif formatted.endswith("千"):
+        return int(float(formatted[:-1]) * 1000)
+    else:
+        try:
+            return int(formatted.replace(",", ""))
+        except ValueError:
+            return 0
+
+
+def update_creator(creators: dict, channel: str, views: int, today: str):
+    """更新单个创作者的统计数据"""
+    if channel not in creators:
+        creators[channel] = {
+            "total_videos": 0,
+            "total_views": 0,
+            "avg_views": 0,
+            "max_views": 0,
+            "first_seen": today,
+            "appearances": 0,
+            "first_discoveries": 0,
+            "is_quality": False,
+            "quality_source": "auto",
+            "tags": [],
+        }
+    c = creators[channel]
+    c["total_videos"] += 1
+    c["total_views"] += views
+    c["max_views"] = max(c.get("max_views", 0), views)
+    c["avg_views"] = c["total_views"] // max(c["total_videos"], 1)
+
+
+def refresh_creator_quality(creators: dict):
+    """刷新所有非手动标记创作者的优质状态"""
+    for channel, c in creators.items():
+        if c.get("quality_source") == "manual":
+            continue  # 手动标记的不覆盖
+        tags = []
+        if c.get("avg_views", 0) >= QUALITY_AVG_VIEWS:
+            tags.append("高均播放")
+        if c.get("max_views", 0) >= QUALITY_MAX_VIEWS:
+            tags.append("爆款视频")
+        if c.get("first_discoveries", 0) >= 1:
+            tags.append("话题首发者")
+        if c.get("appearances", 0) >= 3:
+            tags.append("高频创作")
+        c["is_quality"] = len(tags) > 0
+        c["tags"] = tags
 
 
 def load_index() -> dict:
@@ -78,8 +155,8 @@ def determine_status(topic_entry: dict, today: str) -> str:
     return "新话题"
 
 
-def build_video_line(video: dict) -> str:
-    """构建单条视频的 markdown 行（带复选框）"""
+def build_video_line(video: dict, quality_channels: set = None) -> str:
+    """构建单条视频的 markdown 行（带复选框，优质创作者加 ⭐）"""
     title = video["title"]
     url = video["url"]
     channel = video["channel"]
@@ -87,7 +164,8 @@ def build_video_line(video: dict) -> str:
     views = video["view_count_formatted"]
     duration = video.get("duration_formatted", "")
     duration_part = f" · {duration}" if duration else ""
-    return f"- [ ] [{title}]({url}) — {channel} · {relative_time} · {views}播放{duration_part}"
+    star = " ⭐" if quality_channels and channel in quality_channels else ""
+    return f"- [ ] [{title}]({url}) — {channel}{star} · {relative_time} · {views}播放{duration_part}"
 
 
 def build_topic_ref(topic_entry: dict) -> str:
@@ -119,9 +197,11 @@ def main():
     topics = json.loads(raw)
     TOPIC_DIR.mkdir(parents=True, exist_ok=True)
 
-    # 加载话题索引
+    # 加载话题索引和创作者索引
     index = load_index()
     index_map = {t["id"]: t for t in index["topics"]}
+    creator_data = load_creators()
+    creators = creator_data.get("creators", {})
 
     now = datetime.now()
     today = now.strftime("%Y-%m-%d")
@@ -209,6 +289,27 @@ def main():
     for entry in index_map.values():
         entry["status"] = determine_status(entry, today)
 
+    # 更新创作者索引
+    seen_channels_today = set()
+    for g in topics:
+        for v in g["videos"]:
+            channel = v["channel"]
+            views = parse_view_count(v.get("view_count_formatted", "0"))
+            update_creator(creators, channel, views, today)
+            seen_channels_today.add(channel)
+    # 更新出现期数（每个频道每天只算一次）
+    for ch in seen_channels_today:
+        creators[ch]["appearances"] = creators[ch].get("appearances", 0) + 1
+    # 更新首发者计数
+    for g, entry in new_topics:
+        first_ch = entry.get("first_video", {}).get("channel", "")
+        if first_ch and first_ch in creators:
+            creators[first_ch]["first_discoveries"] = creators[first_ch].get("first_discoveries", 0) + 1
+    # 刷新优质状态
+    refresh_creator_quality(creators)
+    # 构建优质频道集合
+    quality_channels = {ch for ch, c in creators.items() if c.get("is_quality")}
+
     # 统计
     total_videos = sum(len(g["videos"]) for g in topics)
     new_count = len(new_topics)
@@ -248,7 +349,7 @@ topics:
         sections.append("---\n\n## 🆕 新发现的话题")
         for g, entry in new_topics:
             name = g["topic"]
-            video_lines = [build_video_line(v) for v in g["videos"]]
+            video_lines = [build_video_line(v, quality_channels) for v in g["videos"]]
             section = f"### {name}\n" + "\n".join(video_lines)
             sections.append(section)
 
@@ -258,7 +359,7 @@ topics:
         for g, entry in rising_topics:
             name = g["topic"]
             ref_block = build_topic_ref(entry)
-            video_lines = [build_video_line(v) for v in g["videos"]]
+            video_lines = [build_video_line(v, quality_channels) for v in g["videos"]]
             section = f"### {name}\n{ref_block}\n\n" + "\n".join(video_lines)
             sections.append(section)
 
@@ -268,7 +369,7 @@ topics:
         for g, entry in saturated_topics:
             name = g["topic"]
             ref_block = build_topic_ref(entry)
-            video_lines = [build_video_line(v) for v in g["videos"]]
+            video_lines = [build_video_line(v, quality_channels) for v in g["videos"]]
             section = f"### {name}\n{ref_block}\n\n" + "\n".join(video_lines)
             sections.append(section)
 
@@ -279,9 +380,11 @@ topics:
     file_path = TOPIC_DIR / f"{filename_time} YouTube选题总览.md"
     file_path.write_text(content, encoding="utf-8")
 
-    # 保存更新后的话题索引
+    # 保存更新后的话题索引和创作者索引
     index["topics"] = list(index_map.values())
     save_index(index)
+    creator_data["creators"] = creators
+    save_creators(creator_data)
 
     # 输出结果
     print(f"已创建：{file_path.name}（{new_count} 个新话题，{known_count} 个已知话题更新，共 {total_videos} 个视频）")
