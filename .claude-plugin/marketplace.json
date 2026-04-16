@@ -48,6 +48,11 @@
       "name": "cyxj-notebook-research",
       "description": "Notebook LM 批量研究：将选题库视频提交 Google Notebook LM，拉取转录稿和报告",
       "source": "./plugins/cyxj-notebook-research"
+    },
+    {
+      "name": "cyxj-video-cover",
+      "description": "视频封面生成：一句话生成 IP 形象 3D 渲染风格封面，默认 4:3 + 3:4 双版本",
+      "source": "./plugins/cyxj-video-cover"
     }
   ]
 }

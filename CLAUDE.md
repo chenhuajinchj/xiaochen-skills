@@ -76,3 +76,4 @@ cat .claude-plugin/marketplace.json | python3 -c "import sys,json; [print(p['nam
 | cyxj-poster | Python + Gemini API | google-genai, pillow |
 | cyxj-youtube-topics | Python + YouTube Data API | requests |
 | cyxj-notebook-research | Python + Notebook LM | notebooklm-py, python-frontmatter |
+| cyxj-video-cover | Python + Gemini API | google-genai, pillow |

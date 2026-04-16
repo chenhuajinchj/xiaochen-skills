@@ -14,6 +14,7 @@
 | [cyxj-poster](./plugins/cyxj-poster/) | 海报设计：一句话生成大师级海报、书籍封面、专辑封面（33+ 设计师风格） |
 | [cyxj-youtube-topics](./plugins/cyxj-youtube-topics/) | YouTube 选题发现：搜索最近 48 小时新视频，去重聚类写入 Obsidian |
 | [cyxj-notebook-research](./plugins/cyxj-notebook-research/) | Notebook LM 研究：将选题视频提交 Notebook LM，拉取转录稿和报告 |
+| [cyxj-video-cover](./plugins/cyxj-video-cover/) | 视频封面：一句话生成 IP 形象 3D 渲染风格封面（4:3 + 3:4 双版本） |
 
 ## 安装
 
