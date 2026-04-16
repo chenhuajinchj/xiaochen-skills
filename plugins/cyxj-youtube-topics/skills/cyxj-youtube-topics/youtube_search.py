@@ -22,6 +22,8 @@ KEYWORDS = [
     "Claude Code MCP",          # 生态热点
     "Claude Code build",        # 实战展示
     "Claude Code update",       # 资讯更新
+    "Anthropic Academy",        # A 社官方课程/教育
+    "Claude Desktop",           # 桌面版动态
 ]
 HOURS_WINDOW = 48
 MAX_RESULTS_PER_KEYWORD = 50  # 拉满上限，search.list 无论取多少条都扣 100 点
@@ -185,9 +187,9 @@ def enrich_and_filter(api_key: str, videos: list[dict]) -> list[dict]:
     for v in videos:
         title = v["title"]
 
-        # 相关性过滤：标题或描述必须包含 "Claude Code"（不区分大小写）
+        # 相关性过滤：标题或描述必须包含相关关键词（不区分大小写）
         text = (title + " " + v.get("description", "")).lower()
-        if "claude code" not in text:
+        if not any(kw in text for kw in ("claude code", "anthropic", "claude desktop")):
             continue
 
         # 语言过滤：只保留英语（en, en-US, en-GB 等）或未标注语言的视频
