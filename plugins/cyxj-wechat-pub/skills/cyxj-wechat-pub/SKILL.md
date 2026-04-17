@@ -128,11 +128,6 @@ curl -s -X POST "https://img.xiaochens.com/api/v1/upload" \
 - 标题文字要清晰可读，字体风格与画面氛围匹配
 - 分辨率 1800x766（21:9 微信公众号封面规格）
 
-也可使用统一封面工具：
-```bash
-npx -y bun ~/.agents/skills/pw-image-generation/scripts/cover-generator.ts --platform wechat --topic "文章主题" /tmp/covers
-```
-
 **API Key**：从环境变量 `GEMINI_API_KEY` 读取
 **模型**：推荐 `gemini-3.1-flash-image-preview`（快且便宜），高质量需求用 `gemini-3-pro-image-preview`
 
