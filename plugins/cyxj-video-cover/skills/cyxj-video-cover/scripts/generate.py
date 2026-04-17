@@ -23,9 +23,30 @@ from google.genai import types
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_DIR = SCRIPT_DIR.parent
 STYLE_REF = SKILL_DIR / "style-reference" / "reference.png"
-IP_REF_DIR = Path.home() / ".agents" / "skills" / "pw-image-generation" / "ip-reference"
-IP_SPEC_SHEET = IP_REF_DIR / "xiaojin-spec-sheet.png"
-IP_FRONT_VIEW = IP_REF_DIR / "xiaojin-front.png"
+
+
+def get_ip_ref_dir() -> Path:
+    """从环境变量 CYXJ_IP_REF_DIR 读取 IP 参考图目录。
+
+    目录里需要两张图：
+      - <ip-name>-spec-sheet.png（角色设定图，含正/侧/背等多视角）
+      - <ip-name>-front.png（正面图）
+    默认查找文件名以 "xiaojin-" 开头；其他名字请同时改 IP_DESCRIPTION 和文件名。
+    """
+    env_path = os.environ.get("CYXJ_IP_REF_DIR")
+    if not env_path:
+        print(
+            "❌ 未设置 CYXJ_IP_REF_DIR 环境变量。\n"
+            "请准备 IP 形象参考图，放到任意目录后设置：\n"
+            "  export CYXJ_IP_REF_DIR=/path/to/your/ip-reference/\n"
+            "目录里需要包含：\n"
+            "  - xiaojin-spec-sheet.png（角色设定图）\n"
+            "  - xiaojin-front.png（角色正面图）\n"
+            "（封面以这两张图作为风格参考；如要换 IP 形象，请同步改 generate.py 的 IP_DESCRIPTION）",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return Path(env_path).expanduser()
 
 # 默认模型
 DEFAULT_MODEL = "gemini-3-pro-image-preview"
@@ -109,11 +130,14 @@ def build_scene_description(title: str, scene: str | None) -> str:
 
 def load_references() -> list[Image.Image]:
     """加载 IP 参考图和风格参考图。"""
-    refs = []
+    ip_ref_dir = get_ip_ref_dir()
+    ip_spec_sheet = ip_ref_dir / "xiaojin-spec-sheet.png"
+    ip_front_view = ip_ref_dir / "xiaojin-front.png"
 
+    refs = []
     for path, label in [
-        (IP_SPEC_SHEET, "IP spec sheet"),
-        (IP_FRONT_VIEW, "IP front view"),
+        (ip_spec_sheet, "IP spec sheet"),
+        (ip_front_view, "IP front view"),
         (STYLE_REF, "Style reference"),
     ]:
         if path.exists():
@@ -206,8 +230,11 @@ def main():
     # 检查 API key
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not api_key:
-        print("❌ 未设置 GEMINI_API_KEY 或 GOOGLE_API_KEY 环境变量")
+        print("❌ 未设置 GEMINI_API_KEY 或 GOOGLE_API_KEY 环境变量", file=sys.stderr)
         sys.exit(1)
+
+    # 提前校验 IP 参考图目录（错误立即退出，避免先打印一堆主输出再报错）
+    get_ip_ref_dir()
 
     ratios = [r.strip() for r in args.ratios.split(",")]
     output_dir = Path(args.output).resolve()

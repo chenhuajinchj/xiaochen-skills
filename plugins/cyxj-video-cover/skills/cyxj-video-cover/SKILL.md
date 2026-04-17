@@ -11,6 +11,29 @@ description: |
 
 一句话生成带 IP 形象的视频封面。默认输出 4:3 横版 + 3:4 竖版两张。
 
+## 前置准备
+
+首次使用前需要：
+
+1. **Gemini API Key** — 在 https://aistudio.google.com/apikey 创建，然后：
+   ```bash
+   export GEMINI_API_KEY=你的key
+   # 或 export GOOGLE_API_KEY=你的key
+   ```
+
+2. **IP 参考图** — 准备两张你 IP 形象的图片放到任意目录：
+   - `xiaojin-spec-sheet.png`（角色设定图，含正/侧/背等多视角）
+   - `xiaojin-front.png`（正面图）
+
+   然后设置环境变量：
+   ```bash
+   export CYXJ_IP_REF_DIR=/path/to/your/ip-reference/
+   ```
+
+   > 如果你的 IP 不叫"小金"，需要同时改 `scripts/generate.py` 里的 `IP_DESCRIPTION`（描述 IP 外形特征的英文段）和参考图文件名。
+
+3. **Python 依赖**：`pip install google-genai pillow`
+
 ## 工作流
 
 ### Step 1：确认标题
