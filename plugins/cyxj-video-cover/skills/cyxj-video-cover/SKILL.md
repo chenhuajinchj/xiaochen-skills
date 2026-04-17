@@ -21,16 +21,21 @@ description: |
    # 或 export GOOGLE_API_KEY=你的key
    ```
 
-2. **IP 参考图** — 准备两张你 IP 形象的图片放到任意目录：
-   - `xiaojin-spec-sheet.png`（角色设定图，含正/侧/背等多视角）
-   - `xiaojin-front.png`（正面图）
+2. **IP 资料目录** — 任意位置建一个目录，放入：
+   - 至少 1 张 `.png` 参考图（建议正面图 + 多视角设定图，文件名随意）
+   - `ip-description.txt` — 一段英文，描述 IP 形象的外形特征（颜色、服饰、表情、风格等）。这段文字会注入到 Gemini prompt 里保证 IP 一致性
 
    然后设置环境变量：
    ```bash
    export CYXJ_IP_REF_DIR=/path/to/your/ip-reference/
    ```
 
-   > 如果你的 IP 不叫"小金"，需要同时改 `scripts/generate.py` 里的 `IP_DESCRIPTION`（描述 IP 外形特征的英文段）和参考图文件名。
+   `ip-description.txt` 示例：
+   ```
+   A 3D rendered character with a bald head, large blue eyes,
+   wearing an oversized blue hoodie. Smooth vinyl toy finish,
+   friendly and confident expression.
+   ```
 
 3. **Python 依赖**：`pip install google-genai pillow`
 

@@ -28,25 +28,42 @@ STYLE_REF = SKILL_DIR / "style-reference" / "reference.png"
 def get_ip_ref_dir() -> Path:
     """从环境变量 CYXJ_IP_REF_DIR 读取 IP 参考图目录。
 
-    目录里需要两张图：
-      - <ip-name>-spec-sheet.png（角色设定图，含正/侧/背等多视角）
-      - <ip-name>-front.png（正面图）
-    默认查找文件名以 "xiaojin-" 开头；其他名字请同时改 IP_DESCRIPTION 和文件名。
+    目录约定：
+      - 任意数量的 .png 参考图（建议至少 1 张正面图 + 1 张多视角设定图）
+      - ip-description.txt — IP 形象的英文描述段落，用于注入 Gemini prompt
     """
     env_path = os.environ.get("CYXJ_IP_REF_DIR")
     if not env_path:
         print(
             "❌ 未设置 CYXJ_IP_REF_DIR 环境变量。\n"
-            "请准备 IP 形象参考图，放到任意目录后设置：\n"
+            "请准备 IP 形象资料目录后设置：\n"
             "  export CYXJ_IP_REF_DIR=/path/to/your/ip-reference/\n"
-            "目录里需要包含：\n"
-            "  - xiaojin-spec-sheet.png（角色设定图）\n"
-            "  - xiaojin-front.png（角色正面图）\n"
-            "（封面以这两张图作为风格参考；如要换 IP 形象，请同步改 generate.py 的 IP_DESCRIPTION）",
+            "目录里需要：\n"
+            "  - 至少 1 张 .png 参考图（建议正面图 + 多视角设定图）\n"
+            "  - ip-description.txt（一段英文，描述 IP 外形特征）\n"
+            "示例 ip-description.txt 内容：\n"
+            '  A 3D rendered character with a bald head, large blue eyes,\n'
+            '  wearing an oversized blue hoodie. Smooth vinyl toy finish,\n'
+            '  friendly and confident expression.',
             file=sys.stderr,
         )
         sys.exit(1)
     return Path(env_path).expanduser()
+
+
+def load_ip_description(ip_ref_dir: Path) -> str:
+    """从 ${CYXJ_IP_REF_DIR}/ip-description.txt 读取 IP 角色描述。"""
+    desc_file = ip_ref_dir / "ip-description.txt"
+    if not desc_file.exists():
+        print(
+            f"❌ 缺少 IP 角色描述文件：{desc_file}\n"
+            "请创建该文件，写入一段英文描述你 IP 形象的外形特征（颜色、服饰、表情、风格等）。\n"
+            "这段描述会注入到 Gemini prompt 里，让生成的封面保持 IP 一致性。",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return desc_file.read_text(encoding="utf-8").strip()
+
 
 # 默认模型
 DEFAULT_MODEL = "gemini-3-pro-image-preview"
@@ -59,14 +76,6 @@ RATIO_FILENAME = {
     "9:16": "cover_9x16.png",
     "1:1": "cover_1x1.png",
 }
-
-# IP 角色描述
-IP_DESCRIPTION = (
-    "A 3D rendered character with a bald head, large blue eyes, "
-    "a gold drop earring on the right ear, wearing an oversized blue hoodie "
-    'with Chinese text "陈与小金" printed on the chest. '
-    "The character has a smooth vinyl toy finish, friendly and confident expression."
-)
 
 # Prompt 模板
 PROMPT_TEMPLATE = """Generate a video cover/thumbnail image in EXACTLY the same visual style as the style reference image provided.
@@ -128,23 +137,23 @@ def build_scene_description(title: str, scene: str | None) -> str:
     )
 
 
-def load_references() -> list[Image.Image]:
-    """加载 IP 参考图和风格参考图。"""
-    ip_ref_dir = get_ip_ref_dir()
-    ip_spec_sheet = ip_ref_dir / "xiaojin-spec-sheet.png"
-    ip_front_view = ip_ref_dir / "xiaojin-front.png"
+def load_references(ip_ref_dir: Path) -> list[Image.Image]:
+    """加载 IP 参考图（目录里所有 .png）和内置风格参考图。"""
+    ip_pngs = sorted(ip_ref_dir.glob("*.png"))
+    if not ip_pngs:
+        print(f"❌ {ip_ref_dir} 里没有任何 .png 参考图", file=sys.stderr)
+        sys.exit(1)
 
-    refs = []
-    for path, label in [
-        (ip_spec_sheet, "IP spec sheet"),
-        (ip_front_view, "IP front view"),
-        (STYLE_REF, "Style reference"),
-    ]:
-        if path.exists():
-            refs.append(Image.open(path))
-            print(f"  📷 {label}: {path.name}")
-        else:
-            print(f"  ⚠ {label} not found: {path}")
+    refs: list[Image.Image] = []
+    for path in ip_pngs:
+        refs.append(Image.open(path))
+        print(f"  📷 IP ref: {path.name}")
+
+    if STYLE_REF.exists():
+        refs.append(Image.open(STYLE_REF))
+        print(f"  🎨 Style ref: {STYLE_REF.name}")
+    else:
+        print(f"  ⚠ Style reference not found: {STYLE_REF}")
 
     return refs
 
@@ -156,6 +165,7 @@ def generate_cover(
     model: str,
     output_dir: Path,
     refs: list[Image.Image],
+    ip_description: str,
 ) -> Path | None:
     """生成单张封面。"""
     aspect_label = {
@@ -167,7 +177,7 @@ def generate_cover(
     }.get(ratio, f"{ratio} format")
 
     prompt = PROMPT_TEMPLATE.format(
-        ip_description=IP_DESCRIPTION,
+        ip_description=ip_description,
         scene_description=build_scene_description(title, scene),
         title_lines=build_title_lines(title),
         aspect_label=aspect_label,
@@ -233,8 +243,9 @@ def main():
         print("❌ 未设置 GEMINI_API_KEY 或 GOOGLE_API_KEY 环境变量", file=sys.stderr)
         sys.exit(1)
 
-    # 提前校验 IP 参考图目录（错误立即退出，避免先打印一堆主输出再报错）
-    get_ip_ref_dir()
+    # 提前校验 IP 资料目录和描述文件（错误立即退出）
+    ip_ref_dir = get_ip_ref_dir()
+    ip_description = load_ip_description(ip_ref_dir)
 
     ratios = [r.strip() for r in args.ratios.split(",")]
     output_dir = Path(args.output).resolve()
@@ -247,14 +258,13 @@ def main():
     print(f"   输出: {output_dir}")
     print(f"\n📦 加载参考图...")
 
-    refs = load_references()
-    if not refs:
-        print("❌ 没有找到任何参考图，无法生成")
-        sys.exit(1)
+    refs = load_references(ip_ref_dir)
 
     results = []
     for ratio in ratios:
-        result = generate_cover(args.title, args.scene, ratio, args.model, output_dir, refs)
+        result = generate_cover(
+            args.title, args.scene, ratio, args.model, output_dir, refs, ip_description
+        )
         if result:
             results.append(result)
 
