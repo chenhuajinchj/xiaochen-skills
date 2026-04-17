@@ -9,6 +9,8 @@ from pathlib import Path
 
 import requests
 
+from paths import get_topic_dir, load_youtube_api_key
+
 # ── 常量 ──────────────────────────────────────────────
 
 # 第一段：召回关键词（大词 + 受众词 + 功能词 + 内容类型词）
@@ -45,8 +47,6 @@ NON_ENGLISH_PATTERN = re.compile(
     r"[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff"
     r"\u0600-\u06ff\u0e00-\u0e7f\u0900-\u097f]"
 )
-
-from paths import get_topic_dir, load_youtube_api_key
 
 TOPIC_DIR = get_topic_dir()
 SEEN_IDS_PATH = TOPIC_DIR / ".seen_video_ids.json"
