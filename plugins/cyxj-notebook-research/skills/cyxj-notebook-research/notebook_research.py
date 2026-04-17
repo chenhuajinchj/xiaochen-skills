@@ -2,6 +2,7 @@
 """Notebook LM 批量研究工具 — 提交视频 + 拉取研究结果"""
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -12,16 +13,26 @@ from pathlib import Path
 
 import frontmatter
 
+
+def _get_vault_base() -> Path:
+    """从环境变量 CYXJ_VAULT_BASE 读取 Obsidian 灵感库根目录。"""
+    env_path = os.environ.get("CYXJ_VAULT_BASE")
+    if not env_path:
+        print(
+            "错误：未设置 CYXJ_VAULT_BASE 环境变量。\n"
+            "请指向你 Obsidian 库中的灵感库目录（包含「选题库」「研究报告」两个子目录），例如：\n"
+            "  export CYXJ_VAULT_BASE=\"$HOME/obsidian/灵感库\"\n"
+            "建议把这一行加到 ~/.zshrc 或 ~/.bashrc。",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return Path(env_path).expanduser()
+
+
 # ── 常量 ──────────────────────────────────────────────
-VAULT_BASE = (
-    Path.home()
-    / "Library"
-    / "Mobile Documents"
-    / "iCloud~md~obsidian"
-    / "Documents"
-)
-TOPIC_DIR = VAULT_BASE / "灵感库" / "选题库"
-REPORT_DIR = VAULT_BASE / "灵感库" / "研究报告"
+VAULT_BASE = _get_vault_base()
+TOPIC_DIR = VAULT_BASE / "选题库"
+REPORT_DIR = VAULT_BASE / "研究报告"
 
 # 匹配 YouTube URL（完整 URL 和 Video ID）
 YOUTUBE_URL_PATTERN = re.compile(
