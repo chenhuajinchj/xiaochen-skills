@@ -46,17 +46,9 @@ NON_ENGLISH_PATTERN = re.compile(
     r"\u0600-\u06ff\u0e00-\u0e7f\u0900-\u097f]"
 )
 
-# 路径
-SECRETS_PATH = Path.home() / "项目" / "自己的应用" / "密钥存储" / ".env"
-TOPIC_DIR = (
-    Path.home()
-    / "Library"
-    / "Mobile Documents"
-    / "iCloud~md~obsidian"
-    / "Documents"
-    / "灵感库"
-    / "选题库"
-)
+from paths import get_topic_dir, load_youtube_api_key
+
+TOPIC_DIR = get_topic_dir()
 SEEN_IDS_PATH = TOPIC_DIR / ".seen_video_ids.json"
 
 # 匹配 YouTube URL 中的 11 位 Video ID
@@ -67,16 +59,6 @@ VIDEO_ID_PATTERN = re.compile(
 
 
 # ── 工具函数 ──────────────────────────────────────────
-
-def load_api_key() -> str:
-    with open(SECRETS_PATH, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith("YOUTUBE_API_KEY="):
-                return line.split("=", 1)[1].strip(' "\'\n\r')
-    print("错误：在 .env 文件中未找到 YOUTUBE_API_KEY", file=sys.stderr)
-    sys.exit(1)
-
 
 def parse_duration(duration_str: str) -> int:
     match = re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", duration_str)
@@ -269,7 +251,7 @@ def sort_and_output(videos: list[dict]) -> list[dict]:
 # ── 入口 ──────────────────────────────────────────────
 
 def main():
-    api_key = load_api_key()
+    api_key = load_youtube_api_key()
     published_after = (
         datetime.now(timezone.utc) - timedelta(hours=HOURS_WINDOW)
     ).strftime("%Y-%m-%dT%H:%M:%SZ")

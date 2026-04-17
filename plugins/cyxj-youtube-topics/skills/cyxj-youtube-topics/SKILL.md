@@ -13,6 +13,24 @@ description: |
 
 核心目标：**帮用户快速区分"真正的新话题"和"已知话题的翻版"**，而不是每次都平铺一堆看起来都很新但其实大部分都是旧话题换了个博主讲的内容。
 
+## 前置准备
+
+首次使用前需要配置两个东西（一次配置永久生效）：
+
+1. **YouTube Data API v3 Key**
+   - 在 https://console.cloud.google.com/apis/credentials 创建 API key 并启用 YouTube Data API v3
+   - 三种配置方式任选其一（按优先级）：
+     - `export YOUTUBE_API_KEY=你的key`（推荐写到 ~/.zshrc）
+     - 在 `${SKILL_DIR}/.env` 写入 `YOUTUBE_API_KEY=你的key`
+     - 在 `~/.config/cyxj/.env` 写入 `YOUTUBE_API_KEY=你的key`
+
+2. **Obsidian 选题库目录**
+   - 设置环境变量 `CYXJ_TOPIC_DIR` 指向你 Obsidian 库中存放选题的目录：
+     - `export CYXJ_TOPIC_DIR="$HOME/obsidian/灵感库/选题库"`
+   - 这个目录会自动创建并存放每日选题总览、话题索引（话题索引.json）、创作者索引（创作者索引.json）
+
+3. **Python 依赖**：`pip install requests`
+
 ## 流程
 
 ### 第一步：运行搜索脚本
@@ -40,7 +58,7 @@ python3 "$SKILL_DIR/youtube_search.py"
 读取选题库中的话题索引文件：
 
 ```bash
-cat ~/Library/Mobile\ Documents/iCloud~md~obsidian/Documents/灵感库/选题库/话题索引.json
+cat "$CYXJ_TOPIC_DIR/话题索引.json"
 ```
 
 - 如果文件存在，解析其中的 `topics` 数组，了解所有已知话题及其别名

@@ -6,15 +6,9 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-TOPIC_DIR = (
-    Path.home()
-    / "Library"
-    / "Mobile Documents"
-    / "iCloud~md~obsidian"
-    / "Documents"
-    / "灵感库"
-    / "选题库"
-)
+from paths import get_topic_dir
+
+TOPIC_DIR = get_topic_dir()
 INDEX_PATH = TOPIC_DIR / "话题索引.json"
 CREATOR_PATH = TOPIC_DIR / "创作者索引.json"
 
