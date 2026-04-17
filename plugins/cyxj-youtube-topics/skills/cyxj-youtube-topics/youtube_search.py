@@ -226,13 +226,6 @@ def load_seen_ids() -> set[str]:
     return seen
 
 
-def save_seen_ids(existing: set[str], new_videos: list[dict]):
-    """把新视频 ID 追加到索引文件"""
-    all_ids = existing | {v["video_id"] for v in new_videos}
-    TOPIC_DIR.mkdir(parents=True, exist_ok=True)
-    SEEN_IDS_PATH.write_text(json.dumps(sorted(all_ids), ensure_ascii=False), encoding="utf-8")
-
-
 # ── 第三段：排序 + 输出 ──────────────────────────────────
 
 def sort_and_output(videos: list[dict]) -> list[dict]:
@@ -268,11 +261,9 @@ def main():
     print(f"去重后：{len(new_videos)} 个新视频", file=sys.stderr)
 
     # 4. 排序 + 输出
+    #    注意：.seen_video_ids.json 不在这里更新——必须等 write_topics.py 成功写入
+    #    总览文件后才能标记"已处理"，否则中途失败会丢视频。
     result = sort_and_output(new_videos)
-
-    # 5. 更新索引
-    if result:
-        save_seen_ids(seen_ids, result)
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

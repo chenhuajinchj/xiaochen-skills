@@ -50,3 +50,19 @@ def get_topic_dir() -> Path:
         )
         sys.exit(1)
     return Path(env_path).expanduser()
+
+
+def load_user_profile() -> str:
+    """返回用户个人档案的纯文本内容。可用于判断层做差异化建议。
+
+    优先读 CYXJ_USER_PROFILE 环境变量指向的文件。找不到返回空字符串（判断层会降级）。
+    """
+    env_path = os.environ.get("CYXJ_USER_PROFILE")
+    if env_path:
+        p = Path(env_path).expanduser()
+        if p.exists():
+            try:
+                return p.read_text(encoding="utf-8")
+            except Exception:
+                pass
+    return ""

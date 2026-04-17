@@ -1,0 +1,172 @@
+#!/usr/bin/env python3
+"""选题判断层：聚类后做硬信号 + 粗筛 + 字幕抓取。
+
+输入（从 stdin 或 argv[1]）：聚类后的 topics JSON，同 write_topics.py 的格式：
+    [{"topic": "...", "is_new": true|false, "existing_topic_id": "...",
+      "videos": [{...}]}]
+
+输出（到 stdout）：加了 signals、triage、subtitles 三个字段的 JSON。
+verdict 本身（值得做/观望/跟风/跳过 + reason + angle）不在这里生成——
+由 Claude 主流程读 signals + 字幕 + 用户画像后用 LLM 生成，再合并回数据。
+"""
+
+import json
+import re
+import sys
+from datetime import datetime
+from pathlib import Path
+
+from paths import get_topic_dir
+from subtitle_fetcher import fetch_subtitle
+
+TOPIC_DIR = get_topic_dir()
+INDEX_PATH = TOPIC_DIR / "话题索引.json"
+
+DEAD_AGE_DAYS = 14
+DEAD_NO_NEW_THRESHOLD = 1
+SATURATED_LOW_VIEW_THRESHOLD = 300
+
+TOP_N_FOR_SUBTITLES = 3
+
+VIDEO_ID_PATTERN = re.compile(r"([0-9A-Za-z_-]{11})")
+
+
+def load_index() -> dict:
+    if INDEX_PATH.exists():
+        try:
+            return json.loads(INDEX_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"topics": []}
+
+
+def parse_views(formatted: str) -> int:
+    formatted = (formatted or "").strip()
+    try:
+        if formatted.endswith("万"):
+            return int(float(formatted[:-1]) * 10000)
+        if formatted.endswith("千"):
+            return int(float(formatted[:-1]) * 1000)
+        return int(formatted.replace(",", ""))
+    except (ValueError, IndexError):
+        return 0
+
+
+def extract_video_id(url: str) -> str:
+    m = VIDEO_ID_PATTERN.search(url or "")
+    return m.group(1) if m else ""
+
+
+def compute_signals(cluster: dict, historic: dict, today: str) -> dict:
+    """算硬信号，融合本期 + 历史数据。historic 是话题索引条目或 None。"""
+    this_run = len(cluster.get("videos", []))
+    if historic:
+        total = historic.get("total_videos", 0) + this_run
+        first_seen = historic.get("first_seen", today)
+        appearances = historic.get("appearances", 0) + 1
+    else:
+        total = this_run
+        first_seen = today
+        appearances = 1
+
+    saturation = "高" if total >= 10 else ("中" if total >= 3 else "低")
+
+    try:
+        first_dt = datetime.strptime(first_seen, "%Y-%m-%d")
+        today_dt = datetime.strptime(today, "%Y-%m-%d")
+        age_days = (today_dt - first_dt).days
+    except Exception:
+        age_days = 0
+
+    if this_run >= 3 and appearances > 1:
+        momentum = "升温"
+    elif this_run == 0:
+        momentum = "降温"
+    else:
+        momentum = "平稳"
+
+    views = [parse_views(v.get("view_count_formatted", "0")) for v in cluster.get("videos", [])]
+    top_view = max(views) if views else 0
+    total_views = sum(views) if views else 0
+    head_concentration = round(top_view / total_views, 2) if total_views > 0 else 0
+
+    return {
+        "saturation": saturation,
+        "age_days": age_days,
+        "momentum": momentum,
+        "this_run_count": this_run,
+        "total_videos": total,
+        "head_concentration": head_concentration,
+        "top_view_count": top_view,
+    }
+
+
+def triage(signals: dict) -> dict:
+    """粗筛：砍掉明显沉寂/过期/饱和无热度的话题。"""
+    if signals["age_days"] >= DEAD_AGE_DAYS and signals["this_run_count"] <= DEAD_NO_NEW_THRESHOLD:
+        return {
+            "status": "skip",
+            "reason": f"话题 {signals['age_days']} 天前首发，本期仅 {signals['this_run_count']} 新增",
+        }
+    if signals["saturation"] == "高" and signals["top_view_count"] < SATURATED_LOW_VIEW_THRESHOLD:
+        return {
+            "status": "skip",
+            "reason": f"话题已饱和（累计 {signals['total_videos']}），本期头部仅 {signals['top_view_count']} 播放",
+        }
+    return {"status": "pass", "reason": ""}
+
+
+def fetch_subtitles_for_cluster(cluster: dict, top_n: int) -> dict:
+    """拉 top N 视频的字幕。失败的视频返回 None，调用方降级到标题+描述。"""
+    out = {}
+    for v in cluster.get("videos", [])[:top_n]:
+        url = v.get("url", "")
+        vid = extract_video_id(url)
+        if not vid:
+            continue
+        out[vid] = fetch_subtitle(url)
+    return out
+
+
+def main():
+    raw = Path(sys.argv[1]).read_text(encoding="utf-8") if len(sys.argv) > 1 else sys.stdin.read()
+    if not raw.strip():
+        print("错误：未收到聚类后的 topics JSON", file=sys.stderr)
+        sys.exit(1)
+    clusters = json.loads(raw)
+
+    index = load_index()
+    index_map = {t["id"]: t for t in index.get("topics", [])}
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    enriched = []
+    pass_count = 0
+    skip_count = 0
+    for c in clusters:
+        is_new = c.get("is_new", True)
+        existing_id = c.get("existing_topic_id", "")
+        historic = index_map.get(existing_id) if not is_new else None
+
+        c["signals"] = compute_signals(c, historic, today)
+        c["triage"] = triage(c["signals"])
+
+        if c["triage"]["status"] == "pass":
+            pass_count += 1
+            print(f"精筛 → {c['topic']}（拉 top {TOP_N_FOR_SUBTITLES} 字幕）", file=sys.stderr)
+            c["subtitles"] = fetch_subtitles_for_cluster(c, TOP_N_FOR_SUBTITLES)
+            missing = sum(1 for v in c["subtitles"].values() if not v)
+            if missing:
+                print(f"  其中 {missing}/{len(c['subtitles'])} 视频字幕抓取失败", file=sys.stderr)
+        else:
+            skip_count += 1
+            print(f"粗筛砍 → {c['topic']}（{c['triage']['reason']}）", file=sys.stderr)
+            c["subtitles"] = {}
+
+        enriched.append(c)
+
+    print(f"判断层：{pass_count} 个进精筛，{skip_count} 个粗筛砍掉", file=sys.stderr)
+    print(json.dumps(enriched, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main()

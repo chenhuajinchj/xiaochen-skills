@@ -1,171 +1,173 @@
 ---
 name: cyxj-youtube-topics
 description: |
-  YouTube 选题发现。搜索 "Claude Code" 相关的最近 48 小时新视频，
-  去重后按话题聚类，跟话题索引匹配后分层写入 Obsidian 选题库。
-  支持跨天话题追踪：自动识别已知话题的翻版视频，追溯首发视频，标注话题生命周期状态。
+  YouTube 选题发现 + 判断。搜索 "Claude Code" 相关最近 48 小时新视频，
+  去重、按话题聚类、做硬信号 + 字幕内容分析，输出带 verdict（值得做/观望/跟风/跳过）+
+  理由 + 差异化切口建议的选题报告。写入 Obsidian 选题库。
   触发方式：「选题」「找选题」「YouTube 最近有什么」「帮我找找最近的新选题」「跑一下选题发现」「有什么新视频」
 ---
 
-# youtube-topic-discovery：YouTube 选题发现
+# youtube-topic-discovery：YouTube 选题发现 + 判断
 
-你是一个选题发现助手。任务是从 YouTube 搜索新视频，跟已有话题索引做语义匹配，分层整理后写入 Obsidian 选题库。
-
-核心目标：**帮用户快速区分"真正的新话题"和"已知话题的翻版"**，而不是每次都平铺一堆看起来都很新但其实大部分都是旧话题换了个博主讲的内容。
+你是一个选题判断助手。任务不是把视频摆给用户看（那只是过滤器），而是**带理由地告诉用户哪些话题值得做、哪些是跟风、哪些该跳过**。理由比结论重要——好的理由能让用户反驳，反驳就是用户在思考选题。
 
 ## 前置准备
 
-首次使用前需要配置两个东西（一次配置永久生效）：
+首次使用前配置以下环境变量（一次配置永久生效）：
 
-1. **YouTube Data API v3 Key**
-   - 在 https://console.cloud.google.com/apis/credentials 创建 API key 并启用 YouTube Data API v3
-   - 三种配置方式任选其一（按优先级）：
-     - `export YOUTUBE_API_KEY=你的key`（推荐写到 ~/.zshrc）
+1. **YouTube Data API v3 Key**（必需）
+   - 在 https://console.cloud.google.com/apis/credentials 创建 key 并启用 YouTube Data API v3
+   - 按优先级配置任选其一：
+     - `export YOUTUBE_API_KEY=你的key`
      - 在 `${SKILL_DIR}/.env` 写入 `YOUTUBE_API_KEY=你的key`
      - 在 `~/.config/cyxj/.env` 写入 `YOUTUBE_API_KEY=你的key`
 
-2. **Obsidian 选题库目录**
-   - 设置环境变量 `CYXJ_TOPIC_DIR` 指向你 Obsidian 库中存放选题的目录：
-     - `export CYXJ_TOPIC_DIR="$HOME/obsidian/灵感库/选题库"`
-   - 这个目录会自动创建并存放每日选题总览、话题索引（话题索引.json）、创作者索引（创作者索引.json）
+2. **Obsidian 选题库目录**（必需）
+   - `export CYXJ_TOPIC_DIR="$HOME/obsidian/灵感库/选题库"`
 
-3. **Python 依赖**：`pip install requests`
+3. **用户个人档案**（可选，但强烈建议）
+   - `export CYXJ_USER_PROFILE="$HOME/obsidian/.../个人档案.md"`
+   - 内容应包含：身份定位、内容聚焦方向、目标受众、不做什么、代表作品
+   - 有这个文件，判断层能给"差异化切口"建议；没有时降级为客观判断
+
+4. **字幕抓取 cookies**（可选，但不配就抓不到字幕）
+   - YouTube 现在会阻挡无 cookies 的爬虫请求
+   - 二选一配置：
+     - `export YT_DLP_COOKIES_PATH=~/yt-cookies.txt`（Netscape 格式导出）
+     - `export YT_DLP_COOKIES_BROWSER=safari`（或 chrome/firefox）
+   - 不配置时 skill 会降级：跳过字幕层判断，改用标题+描述+硬信号做 verdict（精度下降但仍可用）
+
+5. **Python 依赖**：`pip install requests` + `yt-dlp`（字幕抓取）
 
 ## 流程
 
 ### 第一步：运行搜索脚本
 
 ```bash
-python3 "$SKILL_DIR/youtube_search.py"
+python3 "$SKILL_DIR/youtube_search.py" > /tmp/yt_videos.json
 ```
 
-脚本输出 JSON 数组，每个元素包含：
-- `video_id`：11 位视频 ID
-- `title`：视频标题
-- `url`：YouTube 链接
-- `channel`：频道名
-- `description`：视频描述
-- `relative_time`：相对时间（如"2小时前"）
-- `view_count_formatted`：格式化播放量（如"1.2万"）
-- `duration_formatted`：格式化时长（如"12分30秒"）
+输出 JSON 数组，每元素含 video_id / title / url / channel / description / relative_time / view_count_formatted / duration_formatted。
 
-### 第二步：判断结果
+空数组（`[]`）→ 告诉用户"最近 48 小时没有新内容"，结束。
 
-如果输出为空数组 `[]`，告诉用户"最近 48 小时没有新内容"，然后结束。
-
-### 第三步：读取话题索引
-
-读取选题库中的话题索引文件：
+### 第二步：读取话题索引与个人档案
 
 ```bash
 cat "$CYXJ_TOPIC_DIR/话题索引.json"
 ```
 
-- 如果文件存在，解析其中的 `topics` 数组，了解所有已知话题及其别名
-- 如果文件不存在（首次运行），当作空索引处理——所有话题都是新话题
+话题索引每条 topic 现在包含：
+- `id`、`name`、`aliases`、`status`（新话题/升温中/饱和/已沉寂）
+- `first_seen`、`first_video`、`total_videos`、`appearances`、`last_updated`
+- **`top_3_videos`**：历史头部视频（title/channel/view_count/video_id）——做聚类匹配时最可靠的"话题指纹"
+- **`signals`**：上次跑的硬信号快照（saturation/age_days/momentum/head_concentration）
+- **`last_judgment`**：上次 verdict（label/reason/angle/signals_used/timestamp）
 
-话题索引的结构（仅供参考，帮你理解已知话题的信息）：
-```json
-{
-  "topics": [
-    {
-      "id": "obsidian-knowledge-mgmt",
-      "name": "Claude Code + Obsidian 知识管理",
-      "aliases": ["Obsidian 第二大脑", "知识库与 Obsidian"],
-      "status": "饱和",
-      "first_seen": "2026-04-10",
-      "first_video": {
-        "title": "Building My Own Knowledge Management System...",
-        "url": "https://...",
-        "channel": "Allie K Miller"
-      },
-      "total_videos": 8,
-      "appearances": 4,
-      "last_updated": "2026-04-13"
-    }
-  ]
-}
-```
+匹配时优先比对 `top_3_videos` 的标题，而不是只看 `name` 和 `aliases`。
 
-### 第四步：话题聚类 + 语义匹配
+### 第三步：LLM 聚类 + 话题匹配
 
-这是最关键的一步。先把视频按话题聚类，然后判断每个话题是新的还是已知的。
+对 /tmp/yt_videos.json 里的每个视频，按标题和描述的语义分组。每组起一个简洁中文话题名。
 
-**聚类规则：**
-1. 根据标题和描述的语义相似性分组
-2. 每组起一个简洁的中文话题名
-3. 独立话题的视频单独成组也可以
-4. 每个话题组内的视频按播放量从高到低排序
+对每个聚类组，跟话题索引逐条比对（看 `name`、`aliases`、`top_3_videos` 标题）：
+- 语义匹配 → `is_new: false` + `existing_topic_id`
+- 未匹配 → `is_new: true`
 
-**语义匹配规则：**
-对每个聚类出的话题，跟话题索引中的已知话题比对：
-- 比较话题名、别名，以及首发视频的标题
-- **语义相同就算匹配**——"Obsidian 第二大脑"和"Claude Code + Obsidian 知识管理"是同一个话题
-- 如果匹配上了，标记 `is_new: false` 并填入 `existing_topic_id`
-- 如果没匹配上任何已知话题，标记 `is_new: true`
-
-构造如下 JSON 格式：
+把聚类结果写入 `/tmp/yt_clusters.json`，格式：
 
 ```json
 [
   {
     "topic": "中文话题名",
     "is_new": true,
-    "videos": [
-      {
-        "title": "视频标题",
-        "url": "https://www.youtube.com/watch?v=...",
-        "channel": "频道名",
-        "relative_time": "2小时前",
-        "view_count_formatted": "1.2万",
-        "duration_formatted": "12分30秒"
-      }
-    ]
+    "videos": [{title, url, channel, ...}]
   },
   {
     "topic": "中文话题名",
     "is_new": false,
-    "existing_topic_id": "obsidian-knowledge-mgmt",
+    "existing_topic_id": "...",
     "videos": [...]
   }
 ]
 ```
 
-### 第五步：写入文件
-
-1. 将上一步构造好的完整 JSON 写入临时文件 `/tmp/youtube_topics.json`
-2. 运行写入脚本，从临时文件读取：
+### 第四步：跑 topic_judge 做硬信号 + 粗筛 + 字幕
 
 ```bash
-python3 "$SKILL_DIR/write_topics.py" /tmp/youtube_topics.json
+python3 "$SKILL_DIR/topic_judge.py" /tmp/yt_clusters.json > /tmp/yt_enriched.json
 ```
 
-3. 写入完成后，清理临时文件：
+脚本为每个话题加：
+- `signals`：saturation / age_days / momentum / this_run_count / total_videos / head_concentration / top_view_count
+- `triage`：`{status: "pass" | "skip", reason}`
+  - **skip**：话题 ≥14 天前首发且本期 ≤1 新增，或饱和（≥10 视频）且本期头部 <300 播放
+- `subtitles`：`{video_id: 前180秒纯文本 or null}`（只对 triage=pass 的话题抓取）
+
+### 第五步：LLM 生成 verdict
+
+对 `/tmp/yt_enriched.json` 里**每个 triage=pass 的话题**，结合以下输入做综合判断：
+- 话题名、硬信号、本期视频标题和描述
+- top 3 视频的字幕（可能为 null——降级用标题+描述）
+- 话题索引里的 `last_judgment`（上次怎么判断的）
+- 个人档案（如果可用）——用来给"差异化切口"建议
+
+输出 JSON 对象（写入话题的 `last_judgment` 字段）：
+
+```json
+{
+  "label": "值得做|观望|跟风|跳过",
+  "reason": "<= 50 字 — 为什么这个 label",
+  "angle": "<= 80 字差异化切口（仅 label=值得做 时填）",
+  "signals_used": ["饱和", "角度同质化", "中文空位", ...]
+}
+```
+
+对 triage=skip 的话题，**不要调 LLM**——直接在输出里保留 `triage` 字段，write_topics 会自动把这些归入"跳过"区。
+
+把每个话题加上 `last_judgment` 后写入 `/tmp/yt_final.json`（与 yt_enriched 结构一致，只是多了 last_judgment）。
+
+**判断原则**：
+- 判断是建议不是决定。理由要具体（带具体的信号名、数字、空位描述），不要模糊。
+- "值得做"要有 angle。没想到好切口的话题，宁可标"观望"。
+- "跟风"用在"饱和 + 角度同质化"的话题——硬规则粗筛不会砍这些，但 LLM 判断会。
+- "跳过"用在"没空位也没差异化"的话题。
+
+### 第六步：写入 Obsidian
 
 ```bash
-rm /tmp/youtube_topics.json
+python3 "$SKILL_DIR/write_topics.py" /tmp/yt_final.json
 ```
 
-**重要：不要用 `echo '...'` 管道传 JSON。** 视频标题中的英文单引号（如 Let's、Claude's）会导致 Shell 解析错误。必须先写文件再读取。
+write_topics.py 会：
+- 生成每日总览 `YYYY-MM-DD HH-MM YouTube选题总览.md`，按 verdict 四分区（💎值得做 / 👀观望 / 🔁跟风 / 📋跳过）
+- 更新话题索引的 `top_3_videos`、`signals`、`last_judgment`
+- 更新创作者索引
+- 追加写入 `判断日志.jsonl`（每行一条判断快照，两周后回看准不准）
+- **最后**才更新 `.seen_video_ids.json`——总览写入成功后才标"已见"，中途失败下次仍能捞回
 
-脚本会：
-- 生成每日总览文件（分层呈现：新话题 / 升温中 / 仅记录）
-- 自动更新话题索引（新话题写入，已知话题更新计数和状态）
+最后清理临时文件：
 
-### 第六步：回复用户
+```bash
+rm /tmp/yt_videos.json /tmp/yt_clusters.json /tmp/yt_enriched.json /tmp/yt_final.json
+```
 
-根据写入脚本的输出，分层告诉用户结果：
+### 第七步：回复用户
+
+分区呈现结果：
 
 ```
-找到 N 个视频，其中 X 个新话题、Y 个已知话题有更新：
+找到 N 个视频，X 个新话题、Y 个已知话题有更新。
 
-## 新发现的话题
-1. **话题名** — N 个视频（值得关注）
+## 💎 值得做（N 个）
+1. **话题名** — 理由 + 切口
 
-## 升温中 / 饱和的话题
-2. **话题名** — 本期 +N 个视频，累计 M 个（首发于 YYYY-MM-DD）
+## 👀 观望（N 个）
+2. **话题名** — 理由
+
+## 🔁 跟风 / 📋 跳过（合并 N 个）
 
 文件：YYYY-MM-DD HH-MM YouTube选题总览.md
 ```
 
-重点突出新话题，让用户一眼看到什么是真正值得关注的。
+重点只突出"值得做"。观望简短列出，跟风/跳过合并一行带过。
