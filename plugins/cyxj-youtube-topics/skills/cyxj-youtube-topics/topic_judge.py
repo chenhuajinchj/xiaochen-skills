@@ -29,6 +29,11 @@ SATURATED_LOW_VIEW_THRESHOLD = 300
 TOP_N_FOR_SUBTITLES = 3  # 已知话题：抓本期播放量 top 3
 # 全新话题无历史数据，扩大字幕采样弥补"信息量不足"——视频数通常 1-5，全抓成本可控
 
+# 字幕精筛阈值：对比实验（/tmp/compare_report.md）证明饱和+头部低类
+# 话题字幕带不来增量，只对"可能升值得做"的候选抓字幕
+HEATING_TOP_VIEW_THRESHOLD = 10000   # 升温中：头部 ≥1 万播放才抓
+SATURATED_RESCUE_THRESHOLD = 1000    # 饱和：头部 ≥1 千播放才救援抓字幕
+
 VIDEO_ID_PATTERN = re.compile(r"([0-9A-Za-z_-]{11})")
 
 
@@ -117,6 +122,25 @@ def triage(signals: dict) -> dict:
     return {"status": "pass", "reason": ""}
 
 
+def should_fetch_subtitles(signals: dict, is_new: bool) -> tuple[bool, str]:
+    """字幕精筛：只对可能升到"值得做"的候选抓字幕。
+
+    返回 (是否抓, 精筛原因)。原因用于日志展示。
+    """
+    top_view = signals.get("top_view_count", 0)
+    if is_new:
+        return True, "全新话题抓全部"
+    if signals.get("momentum") == "升温" and top_view >= HEATING_TOP_VIEW_THRESHOLD:
+        return True, f"升温+头部 {top_view / 10000:.1f}w"
+    if signals.get("saturation") == "高" and top_view >= SATURATED_RESCUE_THRESHOLD:
+        return True, f"饱和+头部 {top_view / 1000:.1f}k 救援"
+    if signals.get("saturation") == "高":
+        return False, f"饱和+头部仅 {top_view} 跳过"
+    if signals.get("momentum") == "升温":
+        return False, f"升温但头部仅 {top_view}，字幕无增量"
+    return False, f"非升温+头部 {top_view}，字幕无增量"
+
+
 def fetch_subtitles_for_cluster(cluster: dict, top_n: int) -> dict:
     """拉 top N 视频的字幕。失败的视频返回 None，调用方降级到标题+描述。"""
     out = {}
@@ -141,8 +165,9 @@ def main():
     today = datetime.now().strftime("%Y-%m-%d")
 
     enriched = []
-    pass_count = 0
-    skip_count = 0
+    fetch_count = 0
+    skip_subtitle_count = 0
+    triage_skip_count = 0
     for c in clusters:
         is_new = c.get("is_new", True)
         existing_id = c.get("existing_topic_id", "")
@@ -152,22 +177,34 @@ def main():
         c["triage"] = triage(c["signals"])
 
         if c["triage"]["status"] == "pass":
-            pass_count += 1
-            top_n = len(c.get("videos", [])) if is_new else TOP_N_FOR_SUBTITLES
-            scope = f"全部 {top_n}" if is_new else f"top {top_n}"
-            print(f"精筛 → {c['topic']}（{'🆕 全新' if is_new else '已知'}，拉 {scope} 字幕）", file=sys.stderr)
-            c["subtitles"] = fetch_subtitles_for_cluster(c, top_n)
-            missing = sum(1 for v in c["subtitles"].values() if not v)
-            if missing:
-                print(f"  其中 {missing}/{len(c['subtitles'])} 视频字幕抓取失败", file=sys.stderr)
+            fetch, reason = should_fetch_subtitles(c["signals"], is_new)
+            if fetch:
+                fetch_count += 1
+                top_n = len(c.get("videos", [])) if is_new else TOP_N_FOR_SUBTITLES
+                scope = f"全部 {top_n}" if is_new else f"top {top_n}"
+                tag = "🆕 全新" if is_new else "已知"
+                print(f"精筛 → {c['topic']}（{tag}，{reason}，拉 {scope} 字幕）", file=sys.stderr)
+                c["subtitles"] = fetch_subtitles_for_cluster(c, top_n)
+                missing = sum(1 for v in c["subtitles"].values() if not v)
+                if missing:
+                    print(f"  其中 {missing}/{len(c['subtitles'])} 视频字幕抓取失败", file=sys.stderr)
+            else:
+                skip_subtitle_count += 1
+                print(f"精筛跳过字幕 → {c['topic']}（{reason}）", file=sys.stderr)
+                c["subtitles"] = {}
         else:
-            skip_count += 1
+            triage_skip_count += 1
             print(f"粗筛砍 → {c['topic']}（{c['triage']['reason']}）", file=sys.stderr)
             c["subtitles"] = {}
 
         enriched.append(c)
 
-    print(f"判断层：{pass_count} 个进精筛，{skip_count} 个粗筛砍掉", file=sys.stderr)
+    print(
+        f"判断层：{fetch_count} 进精筛抓字幕，"
+        f"{skip_subtitle_count} 精筛跳过字幕，"
+        f"{triage_skip_count} 粗筛砍",
+        file=sys.stderr,
+    )
     print(json.dumps(enriched, ensure_ascii=False, indent=2))
 
 

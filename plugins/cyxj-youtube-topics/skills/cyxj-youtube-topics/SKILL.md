@@ -101,9 +101,15 @@ python3 "$SKILL_DIR/topic_judge.py" /tmp/yt_clusters.json > /tmp/yt_enriched.jso
 - `signals`：saturation / age_days / momentum / this_run_count / total_videos / head_concentration / top_view_count
 - `triage`：`{status: "pass" | "skip", reason}`
   - **skip**：话题 ≥14 天前首发且本期 ≤1 新增，或饱和（≥10 视频）且本期头部 <300 播放
-- `subtitles`：`{video_id: 前180秒纯文本 or null}`（只对 triage=pass 的话题抓取）
-  - **已知话题**：抓本期播放量 top 3（作主流参考系，避免冗余）
-  - **全新话题**（is_new=True）：抓本期**全部**视频（无历史数据，扩大采样弥补信息量不足；视频数通常 1-5 个，成本可控）
+- `subtitles`：`{video_id: 前180秒纯文本 or null}`
+  - **抓字幕的条件**（两层筛选）：
+    1. triage=pass（未被饱和/沉寂粗筛砍）
+    2. 精筛命中其中之一：
+       - 全新话题（is_new=True）→ 抓本期**全部**视频
+       - 已知 + 升温中 + 头部播放 ≥1 万 → 抓 top 3
+       - 已知 + 饱和但头部 ≥1 千 → 抓 top 3（救援边界话题）
+  - 其他（饱和+头部低 < 1 千）→ 不抓，LLM 降级用标题+描述判断
+  - 理由：字幕对"跟风/跳过"的判断带不来增量，只对"可能值得做"的话题有价值
   - 主路径 `youtube-transcript-api`，0.5-2s/视频；失败 fallback 到 yt-dlp（慢但能扛 IP 限流）
 
 ### 第五步：LLM 生成 verdict
