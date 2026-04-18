@@ -30,13 +30,24 @@ description: |
    - 内容应包含：身份定位、内容聚焦方向、目标受众、不做什么、代表作品
    - 有这个文件，判断层能给"差异化切口"建议；没有时降级为客观判断
 
-4. **字幕抓取 cookies**（**已不再必需**，留作 fallback）
-   - 主路径用 `youtube-transcript-api`，走 YouTube 网页内部接口，**不需要 cookies**，单视频 0.5-2s
-   - 仅当主路径被 IP 限流时才会 fallback 到 yt-dlp，那时才用得上 cookies。如果你之前配过 `YT_DLP_COOKIES_PATH` / `YT_DLP_COOKIES_BROWSER`，**保留即可，不影响**
+4. **Apify API Token**（必需，字幕抓取主路径）
+   - 注册 apify.com，Settings → API & Integrations → Personal API Token
+   - 添加 Actor：Apify Store 搜 `karamelo/youtube-transcripts` 并 bookmark
+   - 按优先级配置任选其一：
+     - `export APIFY_API_TOKEN=你的token`
+     - 在 `${SKILL_DIR}/.env` 写入 `APIFY_API_TOKEN=你的token`
+     - 在 `~/.config/cyxj/.env` 写入 `APIFY_API_TOKEN=你的token`
+   - Free plan 每月 $5 credit，按 $0.007/视频计费，每月 600 视频约用 $4.2，在 Free 额度内
 
-5. **Python 依赖**：`pip install -r requirements.txt`
-   - 必需：`requests`、`youtube-transcript-api>=1.2.0`
-   - Fallback 才用：`yt-dlp`（系统命令，已装就行；没装也不影响主路径）
+5. **Supadata API Key**（可选，fallback 兜底）
+   - 注册 supadata.ai，dashboard 拷贝 API key
+   - 配置：同 Apify，变量名 `SUPADATA_API_KEY`
+   - Free tier 每月 100 credits，应急 fallback 够用
+   - 不配置也能跑，只是 karamelo 挂时没兜底
+
+6. **Python 依赖**：`pip install -r requirements.txt`
+   - 必需：`requests`
+   - 不再需要 `youtube-transcript-api`（主路径已换 Apify 代理，不走 YouTube 内部接口）
 
 ## 流程
 
@@ -110,7 +121,8 @@ python3 "$SKILL_DIR/topic_judge.py" /tmp/yt_clusters.json > /tmp/yt_enriched.jso
        - 已知 + 饱和但头部 ≥1 千 → 抓 top 3（救援边界话题）
   - 其他（饱和+头部低 < 1 千）→ 不抓，LLM 降级用标题+描述判断
   - 理由：字幕对"跟风/跳过"的判断带不来增量，只对"可能值得做"的话题有价值
-  - 主路径 `youtube-transcript-api`，0.5-2s/视频；失败 fallback 到 yt-dlp（慢但能扛 IP 限流）
+  - 主路径 Apify `karamelo/youtube-transcripts`（Apify IP 池，0.5-2s/视频均值，不污染本地 IP）
+  - 失败 fallback Supadata（独立 IP 池，每月 100 credits 免费）
 
 ### 第五步：LLM 生成 verdict
 

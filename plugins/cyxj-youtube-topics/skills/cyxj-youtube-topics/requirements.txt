@@ -1,2 +1,1 @@
 requests
-youtube-transcript-api>=1.2.0

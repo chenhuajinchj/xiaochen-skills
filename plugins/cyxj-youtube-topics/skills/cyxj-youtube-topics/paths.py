@@ -37,6 +37,57 @@ def load_youtube_api_key() -> str:
     sys.exit(1)
 
 
+def load_apify_token() -> str:
+    """按优先级查找 APIFY_API_TOKEN。必需配置，找不到报错退出。
+
+    1. 环境变量 APIFY_API_TOKEN
+    2. ${SKILL_DIR}/.env
+    3. ~/.config/cyxj/.env
+    """
+    token = os.environ.get("APIFY_API_TOKEN")
+    if token:
+        return token.strip()
+
+    for env_path in (SKILL_DIR / ".env", Path.home() / ".config" / "cyxj" / ".env"):
+        if env_path.exists():
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line.startswith("APIFY_API_TOKEN="):
+                    return line.split("=", 1)[1].strip(' "\'\n\r')
+
+    print(
+        "错误：未找到 APIFY_API_TOKEN。请按以下任一方式配置：\n"
+        "  1. 环境变量：export APIFY_API_TOKEN=你的token\n"
+        f"  2. 在 {SKILL_DIR}/.env 写入：APIFY_API_TOKEN=你的token\n"
+        "  3. 在 ~/.config/cyxj/.env 写入：APIFY_API_TOKEN=你的token\n"
+        "获取方式：apify.com 注册 → Settings → API & Integrations → Personal API Token\n"
+        "另外需要在 Apify Store 搜索并 bookmark Actor：karamelo/youtube-transcripts",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+
+def load_supadata_key() -> str:
+    """按优先级查找 SUPADATA_API_KEY。可选配置，找不到返回空字符串。
+
+    1. 环境变量 SUPADATA_API_KEY
+    2. ${SKILL_DIR}/.env
+    3. ~/.config/cyxj/.env
+    """
+    key = os.environ.get("SUPADATA_API_KEY")
+    if key:
+        return key.strip()
+
+    for env_path in (SKILL_DIR / ".env", Path.home() / ".config" / "cyxj" / ".env"):
+        if env_path.exists():
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line.startswith("SUPADATA_API_KEY="):
+                    return line.split("=", 1)[1].strip(' "\'\n\r')
+
+    return ""
+
+
 def get_topic_dir() -> Path:
     """返回 Obsidian 选题库目录路径。从环境变量 CYXJ_TOPIC_DIR 读取。"""
     env_path = os.environ.get("CYXJ_TOPIC_DIR")
