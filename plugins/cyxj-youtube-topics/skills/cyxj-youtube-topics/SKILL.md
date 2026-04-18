@@ -102,6 +102,8 @@ python3 "$SKILL_DIR/topic_judge.py" /tmp/yt_clusters.json > /tmp/yt_enriched.jso
 - `triage`：`{status: "pass" | "skip", reason}`
   - **skip**：话题 ≥14 天前首发且本期 ≤1 新增，或饱和（≥10 视频）且本期头部 <300 播放
 - `subtitles`：`{video_id: 前180秒纯文本 or null}`（只对 triage=pass 的话题抓取）
+  - **已知话题**：抓本期播放量 top 3（作主流参考系，避免冗余）
+  - **全新话题**（is_new=True）：抓本期**全部**视频（无历史数据，扩大采样弥补信息量不足；视频数通常 1-5 个，成本可控）
   - 主路径 `youtube-transcript-api`，0.5-2s/视频；失败 fallback 到 yt-dlp（慢但能扛 IP 限流）
 
 ### 第五步：LLM 生成 verdict

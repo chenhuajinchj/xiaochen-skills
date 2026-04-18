@@ -26,7 +26,8 @@ DEAD_AGE_DAYS = 14
 DEAD_NO_NEW_THRESHOLD = 1
 SATURATED_LOW_VIEW_THRESHOLD = 300
 
-TOP_N_FOR_SUBTITLES = 3
+TOP_N_FOR_SUBTITLES = 3  # 已知话题：抓本期播放量 top 3
+# 全新话题无历史数据，扩大字幕采样弥补"信息量不足"——视频数通常 1-5，全抓成本可控
 
 VIDEO_ID_PATTERN = re.compile(r"([0-9A-Za-z_-]{11})")
 
@@ -152,8 +153,10 @@ def main():
 
         if c["triage"]["status"] == "pass":
             pass_count += 1
-            print(f"精筛 → {c['topic']}（拉 top {TOP_N_FOR_SUBTITLES} 字幕）", file=sys.stderr)
-            c["subtitles"] = fetch_subtitles_for_cluster(c, TOP_N_FOR_SUBTITLES)
+            top_n = len(c.get("videos", [])) if is_new else TOP_N_FOR_SUBTITLES
+            scope = f"全部 {top_n}" if is_new else f"top {top_n}"
+            print(f"精筛 → {c['topic']}（{'🆕 全新' if is_new else '已知'}，拉 {scope} 字幕）", file=sys.stderr)
+            c["subtitles"] = fetch_subtitles_for_cluster(c, top_n)
             missing = sum(1 for v in c["subtitles"].values() if not v)
             if missing:
                 print(f"  其中 {missing}/{len(c['subtitles'])} 视频字幕抓取失败", file=sys.stderr)
