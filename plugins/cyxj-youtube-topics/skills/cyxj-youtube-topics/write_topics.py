@@ -257,8 +257,11 @@ def build_video_line(video: dict, quality_channels: set = None) -> str:
     return f"- [ ] [{title}]({url}) — {channel}{star} · {relative_time} · {views}播放{duration_part}"
 
 
-def build_topic_ref(topic_entry: dict) -> str:
-    """构建已知话题的引用块（首发信息）"""
+def build_topic_ref(topic_entry: dict, *, nested: bool = False) -> str:
+    """构建已知话题的「首发追溯」callout 块。
+
+    nested=True 时返回嵌套语法（每行 `> > ` 前缀），用于挂在主 verdict callout 内部。
+    nested=False 时返回顶层 callout 语法（每行 `> ` 前缀）。"""
     first = topic_entry.get("first_video", {})
     first_title = first.get("title", "未知")
     first_url = first.get("url", "")
@@ -268,7 +271,16 @@ def build_topic_ref(topic_entry: dict) -> str:
     status = topic_entry.get("status", "未知")
 
     link = f"[{first_title}]({first_url})" if first_url else first_title
-    return f"> 首发：{first_seen} · {first_channel} · {link}\n> 累计 {total} 个视频 · 状态：{status}"
+    prefix = "> > " if nested else "> "
+    lines = [
+        f"{prefix}[!quote] 首发追溯",
+        f"{prefix}**首发视频**：{link}",
+        f"{prefix}**频道**：{first_channel}",
+        f"{prefix}**发布时间**：{first_seen}",
+        f"{prefix}**累计**：{total} 个视频",
+        f"{prefix}**状态**：{status}",
+    ]
+    return "\n".join(lines)
 
 
 def effective_verdict(cluster: dict) -> dict:
@@ -321,32 +333,83 @@ def format_signals_line(signals: dict) -> str:
     return " · ".join(parts)
 
 
+# verdict → callout 类型 + 折叠符 映射
+VERDICT_CALLOUT = {
+    "值得做": ("success", "+"),
+    "观望":   ("info",    "+"),
+    "跟风":   ("warning", "-"),
+    "跳过":   ("failure", "-"),
+}
+
+
 def build_verdict_block(cluster: dict, entry: dict) -> str:
-    """值得做 / 观望 的详细展示块"""
+    """构建话题的顶层 callout 块（仅含判断字段，不含视频列表）。
+
+    格式：
+        > [!success]+ 话题名 `[状态]`
+        > **理由**：...
+        > **切口**：...     （跳过省略）
+        > **信号**：...
+        > **依据**：...
+    """
     v = effective_verdict(cluster)
-    signals_line = format_signals_line(cluster.get("signals") or {})
+    label = v["label"]
+    callout_type, fold = VERDICT_CALLOUT.get(label, ("info", "+"))
+    name = cluster.get("topic", "未知")
     status_tag = f"`[{entry.get('status', '未知')}]`"
+    signals_line = format_signals_line(cluster.get("signals") or {})
 
-    lines = [f"**判断**：{v['label']}"]
+    lines = [f"> [!{callout_type}]{fold} {name} {status_tag}"]
     if v["reason"]:
-        lines.append(f"**理由**：{v['reason']}")
-    if v["angle"]:
-        lines.append(f"**切口**：{v['angle']}")
+        lines.append(f"> **理由**：{v['reason']}")
+    # 跳过省略「切口」字段
+    if v["angle"] and label != "跳过":
+        lines.append(f"> **切口**：{v['angle']}")
     if signals_line:
-        lines.append(f"**信号**：{signals_line}")
+        lines.append(f"> **信号**：{signals_line}")
     if v["signals_used"]:
-        lines.append(f"**依据**：{'、'.join(v['signals_used'])}")
-    return status_tag + "\n\n" + "\n".join(f"- {line}" for line in lines)
+        lines.append(f"> **依据**：{'、'.join(v['signals_used'])}")
+    return "\n".join(lines)
 
 
-def build_oneliner(cluster: dict, entry: dict) -> str:
-    """跟风 / 跳过 的一行紧凑展示"""
-    v = effective_verdict(cluster)
-    total = entry.get("total_videos", 0)
-    this_run = cluster.get("signals", {}).get("this_run_count", 0)
-    status = entry.get("status", "未知")
-    reason = v["reason"] or "—"
-    return f"- **{cluster.get('topic', '未知')}** `[{status}]` · 本期 +{this_run} · 累计 {total} · {reason}"
+def build_nested_video_list(videos: list, quality_channels: set = None) -> str:
+    """构建嵌套在主 callout 内的「相关视频」折叠 callout（`> > [!example]-`）。
+
+    每条视频：- [title](url) · channel⭐ · 时间 · 播放 · 时长
+    返回的字符串本身已包含前导空 `>` 行（嵌套必需）。
+    """
+    if not videos:
+        return ""
+    header = f"> > [!example]- 相关视频（{len(videos)} 条）"
+    item_lines = []
+    for v in videos:
+        title = v.get("title", "")
+        url = v.get("url", "")
+        channel = v.get("channel", "")
+        relative_time = v.get("relative_time", "")
+        views = v.get("view_count_formatted", "")
+        duration = v.get("duration_formatted", "")
+        star = " ⭐" if quality_channels and channel in quality_channels else ""
+        parts = [f"[{title}]({url})", f"{channel}{star}", relative_time, f"{views}播放"]
+        if duration:
+            parts.append(duration)
+        item_lines.append("> > - " + " · ".join(parts))
+    # 前导空 `>` 让 Obsidian 识别嵌套 callout
+    return ">\n" + header + "\n" + "\n".join(item_lines)
+
+
+def build_oneliner(cluster: dict, entry: dict, quality_channels: set = None) -> str:
+    """跟风 / 跳过 的 callout 块 + 嵌套视频列表（折叠）。
+
+    用 verdict 对应的 warning/failure callout 包裹判断字段，再嵌套一个 [!example]- 折叠
+    视频列表，让用户点开就能看到链接。
+    """
+    verdict_block = build_verdict_block(cluster, entry)
+    videos = cluster.get("videos", []) or []
+    nested = build_nested_video_list(videos, quality_channels)
+    if not nested:
+        return verdict_block
+    return verdict_block + "\n" + nested
 
 
 def main():
@@ -513,7 +576,8 @@ def main():
     # ── 构建 Markdown ──
 
     all_topic_names = [g["topic"] for g in topics]
-    topics_yaml = "\n".join(f"  - {name}" for name in all_topic_names)
+    # topics 列表项含中文/特殊字符，必须加引号（PROPERTIES 规范第 5 节）
+    topics_yaml = "\n".join(f'  - "{name}"' for name in all_topic_names)
 
     frontmatter = f"""---
 source: ai-discovery
@@ -521,13 +585,14 @@ created: {timestamp}
 status: 未处理
 new_topics: {new_count}
 known_topics: {known_count}
-verdict_counts:
-  值得做: {worth_count}
-  观望: {watch_count}
-  跟风: {follow_count}
-  跳过: {skip_count}
+verdict_worth_doing: {worth_count}
+verdict_watching: {watch_count}
+verdict_follow: {follow_count}
+verdict_skip: {skip_count}
 topics:
 {topics_yaml}
+cssclasses:
+  - youtube-topics-report
 ---"""
 
     overview = f"""## 本次抓取概览
@@ -538,41 +603,43 @@ topics:
     sections = []
 
     def detail_section(g, entry):
-        """值得做/观望 的详细块"""
-        name = g["topic"]
+        """值得做 / 观望 的详细块：
+        主 callout（success/info）+ （非新话题时）嵌套首发追溯 + 嵌套视频列表。
+        统一用嵌套 callout，跟跟风/跳过保持一致。
+        """
         verdict_block = build_verdict_block(g, entry)
-        parts = [f"### {name} {verdict_block}"]
+        parts = [verdict_block]
         if not g.get("is_new", True):
-            parts.append(build_topic_ref(entry))
-        video_lines = [build_video_line(v, quality_channels) for v in g["videos"]]
-        parts.append("\n".join(video_lines))
-        return "\n\n".join(parts)
+            # 嵌套在主 callout 内，前导一行空 `>` 让 Obsidian 识别
+            parts.append(">\n" + build_topic_ref(entry, nested=True))
+        nested_videos = build_nested_video_list(g["videos"], quality_channels)
+        if nested_videos:
+            parts.append(nested_videos)
+        return "\n".join(parts)
 
     # 值得做
     if buckets["值得做"]:
-        sections.append(f"---\n\n## 💎 值得做（{worth_count} 个）")
+        sections.append(f"## 💎 值得做（{worth_count} 个）")
         for g, entry in buckets["值得做"]:
             sections.append(detail_section(g, entry))
 
     # 观望
     if buckets["观望"]:
-        sections.append(f"---\n\n## 👀 观望（{watch_count} 个）")
+        sections.append(f"## 👀 观望（{watch_count} 个）")
         for g, entry in buckets["观望"]:
             sections.append(detail_section(g, entry))
 
-    # 跟风（一行）
+    # 跟风（callout + 嵌套折叠视频列表）
     if buckets["跟风"]:
-        lines = [f"---\n\n## 🔁 跟风（{follow_count} 个）"]
+        sections.append(f"## 🔁 跟风（{follow_count} 个）")
         for g, entry in buckets["跟风"]:
-            lines.append(build_oneliner(g, entry))
-        sections.append("\n".join(lines))
+            sections.append(build_oneliner(g, entry, quality_channels))
 
-    # 跳过（一行）
+    # 跳过（callout + 嵌套折叠视频列表）
     if buckets["跳过"]:
-        lines = [f"---\n\n## 📋 跳过（{skip_count} 个）"]
+        sections.append(f"## 📋 跳过（{skip_count} 个）")
         for g, entry in buckets["跳过"]:
-            lines.append(build_oneliner(g, entry))
-        sections.append("\n".join(lines))
+            sections.append(build_oneliner(g, entry, quality_channels))
 
     content = frontmatter + "\n\n" + overview + "\n\n" + "\n\n".join(sections) + "\n"
 

@@ -30,14 +30,13 @@ description: |
    - 内容应包含：身份定位、内容聚焦方向、目标受众、不做什么、代表作品
    - 有这个文件，判断层能给"差异化切口"建议；没有时降级为客观判断
 
-4. **字幕抓取 cookies**（可选，但不配就抓不到字幕）
-   - YouTube 现在会阻挡无 cookies 的爬虫请求
-   - 二选一配置：
-     - `export YT_DLP_COOKIES_PATH=~/yt-cookies.txt`（Netscape 格式导出）
-     - `export YT_DLP_COOKIES_BROWSER=safari`（或 chrome/firefox）
-   - 不配置时 skill 会降级：跳过字幕层判断，改用标题+描述+硬信号做 verdict（精度下降但仍可用）
+4. **字幕抓取 cookies**（**已不再必需**，留作 fallback）
+   - 主路径用 `youtube-transcript-api`，走 YouTube 网页内部接口，**不需要 cookies**，单视频 0.5-2s
+   - 仅当主路径被 IP 限流时才会 fallback 到 yt-dlp，那时才用得上 cookies。如果你之前配过 `YT_DLP_COOKIES_PATH` / `YT_DLP_COOKIES_BROWSER`，**保留即可，不影响**
 
-5. **Python 依赖**：`pip install requests` + `yt-dlp`（字幕抓取）
+5. **Python 依赖**：`pip install -r requirements.txt`
+   - 必需：`requests`、`youtube-transcript-api>=1.2.0`
+   - Fallback 才用：`yt-dlp`（系统命令，已装就行；没装也不影响主路径）
 
 ## 流程
 
@@ -103,6 +102,7 @@ python3 "$SKILL_DIR/topic_judge.py" /tmp/yt_clusters.json > /tmp/yt_enriched.jso
 - `triage`：`{status: "pass" | "skip", reason}`
   - **skip**：话题 ≥14 天前首发且本期 ≤1 新增，或饱和（≥10 视频）且本期头部 <300 播放
 - `subtitles`：`{video_id: 前180秒纯文本 or null}`（只对 triage=pass 的话题抓取）
+  - 主路径 `youtube-transcript-api`，0.5-2s/视频；失败 fallback 到 yt-dlp（慢但能扛 IP 限流）
 
 ### 第五步：LLM 生成 verdict
 
@@ -141,6 +141,10 @@ python3 "$SKILL_DIR/write_topics.py" /tmp/yt_final.json
 
 write_topics.py 会：
 - 生成每日总览 `YYYY-MM-DD HH-MM YouTube选题总览.md`，按 verdict 四分区（💎值得做 / 👀观望 / 🔁跟风 / 📋跳过）
+- 用 Obsidian 原生 Callouts 渲染：值得做=`[!success]+`绿色 / 观望=`[!info]+`蓝色 / 跟风=`[!warning]-`橙色折叠 / 跳过=`[!failure]-`红色折叠
+- 每个话题的 callout 内嵌一个 `> > [!example]-` 折叠视频列表（点开就能看链接）
+- 已知话题额外嵌一个 `[!quote]` 首发追溯块
+- frontmatter 用 4 个独立 Number 字段（verdict_worth_doing / verdict_watching / verdict_follow / verdict_skip），便于 Bases 视图筛选
 - 更新话题索引的 `top_3_videos`、`signals`、`last_judgment`
 - 更新创作者索引
 - 追加写入 `判断日志.jsonl`（每行一条判断快照，两周后回看准不准）
