@@ -16,6 +16,7 @@ VIDEO_ID_PATTERN = re.compile(
 
 TOPIC_DIR = get_topic_dir()
 INDEX_PATH = TOPIC_DIR / "话题索引.json"
+ARCHIVE_INDEX_PATH = TOPIC_DIR / "话题索引-归档.json"
 CREATOR_PATH = TOPIC_DIR / "创作者索引.json"
 SEEN_IDS_PATH = TOPIC_DIR / ".seen_video_ids.json"
 
@@ -24,6 +25,7 @@ RISING_MIN_APPEARANCES = 2
 SATURATED_MIN_APPEARANCES = 4
 SATURATED_MIN_VIDEOS = 10
 STALE_DAYS = 5
+ARCHIVE_AFTER_DAYS = 30  # 已沉寂 + 超过 N 天没更新 → 归档
 
 # 创作者优质判断阈值
 QUALITY_AVG_VIEWS = 5000
@@ -207,6 +209,42 @@ def save_index(index: dict):
         json.dumps(index, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+
+
+def archive_stale_topics(index: dict, today: str) -> int:
+    """把已沉寂 + 超过 ARCHIVE_AFTER_DAYS 天没更新的话题挪到归档文件。返回归档数量。"""
+    today_dt = datetime.strptime(today, "%Y-%m-%d")
+    active, to_archive = [], []
+    for entry in index.get("topics", []):
+        if entry.get("status") != "已沉寂":
+            active.append(entry)
+            continue
+        try:
+            last_dt = datetime.strptime(entry.get("last_updated", today), "%Y-%m-%d")
+            if (today_dt - last_dt).days >= ARCHIVE_AFTER_DAYS:
+                to_archive.append(entry)
+            else:
+                active.append(entry)
+        except ValueError:
+            active.append(entry)
+
+    if to_archive:
+        archive = {"topics": []}
+        if ARCHIVE_INDEX_PATH.exists():
+            try:
+                archive = json.loads(ARCHIVE_INDEX_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        # 加归档时间戳
+        for t in to_archive:
+            t["archived_at"] = today
+        archive.setdefault("topics", []).extend(to_archive)
+        ARCHIVE_INDEX_PATH.write_text(
+            json.dumps(archive, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        index["topics"] = active
+    return len(to_archive)
 
 
 def make_topic_id(name: str) -> str:
@@ -661,6 +699,9 @@ cssclasses:
 
     # 保存更新后的话题索引和创作者索引
     index["topics"] = list(index_map.values())
+    archived_count = archive_stale_topics(index, today)
+    if archived_count:
+        print(f"归档 {archived_count} 个长期沉寂话题", file=sys.stderr)
     save_index(index)
     creator_data["creators"] = creators
     save_creators(creator_data)

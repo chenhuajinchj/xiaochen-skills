@@ -2,6 +2,7 @@
 """YouTube 选题发现 — 三段式：召回 → 硬过滤 → 排序输出"""
 
 import json
+import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
@@ -27,7 +28,7 @@ KEYWORDS = [
     "Anthropic Academy",        # A 社官方课程/教育
     "Claude Desktop",           # 桌面版动态
 ]
-HOURS_WINDOW = 48
+HOURS_WINDOW = max(1, min(168, int(os.environ.get("CYXJ_LOOKBACK_HOURS", "48"))))
 MAX_RESULTS_PER_KEYWORD = 50  # 拉满上限，search.list 无论取多少条都扣 100 点
 API_BASE = "https://www.googleapis.com/youtube/v3"
 
@@ -92,6 +93,7 @@ def recall(api_key: str, published_after: str) -> list[dict]:
     """多关键词搜索，尽量多拿候选，按 Video ID 去重"""
     all_videos = []
     seen_ids = set()
+    failed_keywords = []
 
     for keyword in KEYWORDS:
         try:
@@ -108,6 +110,7 @@ def recall(api_key: str, published_after: str) -> list[dict]:
             resp.raise_for_status()
         except Exception as e:
             print(f"警告：关键词 '{keyword}' 搜索失败 ({e})", file=sys.stderr)
+            failed_keywords.append(keyword)
             continue
 
         for item in resp.json().get("items", []):
@@ -124,6 +127,10 @@ def recall(api_key: str, published_after: str) -> list[dict]:
                 "published_at": snippet["publishedAt"],
                 "url": f"https://www.youtube.com/watch?v={video_id}",
             })
+
+    if len(failed_keywords) == len(KEYWORDS):
+        print(f"错误：所有 {len(KEYWORDS)} 个关键词搜索全部失败，疑似 API key 失效或网络问题", file=sys.stderr)
+        sys.exit(1)
 
     print(f"召回：{len(all_videos)} 个候选", file=sys.stderr)
     return all_videos
