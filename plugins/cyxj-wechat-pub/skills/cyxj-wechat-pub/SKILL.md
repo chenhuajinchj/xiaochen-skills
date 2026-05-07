@@ -11,9 +11,9 @@ version: 1.0.0
 
 ## Files
 
-- `${CLAUDE_PLUGIN_ROOT}/theme-tatalab.css` - TATALAB 风格 CSS 主题
-- `${CLAUDE_PLUGIN_ROOT}/preview-template.html` - 预览 HTML 模板
-- `${CLAUDE_PLUGIN_ROOT}/package.json` - npm 依赖（仅 juice）
+- `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/theme-tatalab.css` - TATALAB 风格 CSS 主题
+- `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/preview-template.html` - 预览 HTML 模板
+- `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/package.json` - npm 依赖（仅 juice）
 
 ## Workflow
 
@@ -102,7 +102,9 @@ Obsidian .md
 
 **图床上传流程**（Lsky Pro - img.xiaochens.com）：
 
-> 图床认证需要环境变量 `LSKY_EMAIL` 和 `LSKY_PASSWORD`。如果未设置，提示用户先配置。
+> 图床凭证从 `~/项目/自己的应用/密钥存储/.env` 读取（变量名 `LSKY_EMAIL` / `LSKY_PASSWORD`）。
+> 如果环境变量未设置，先 `set -a; source ~/项目/自己的应用/密钥存储/.env; set +a` 加载，再继续。
+> 如果文件里没这两个 key，提示用户加。
 
 ```bash
 # 1. 获取 token
@@ -136,11 +138,11 @@ curl -s -X POST "https://img.xiaochens.com/api/v1/upload" \
 1. Run juice to inline all CSS styles:
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && { [ -d node_modules ] || npm install; }
+cd ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub && { [ -d node_modules ] || npm install; }
 ```
 
 ```bash
-cd ${CLAUDE_PLUGIN_ROOT} && node -e "
+cd ${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub && node -e "
 const juice = require('juice');
 const fs = require('fs');
 const css = fs.readFileSync('theme-tatalab.css', 'utf8');
@@ -152,9 +154,14 @@ fs.writeFileSync('/tmp/wechat-output.html', juice.inlineContent(html, css));
 2. Read `preview-template.html`
 3. Replace `{{CONTENT}}` with the juice-inlined HTML
 4. Write to `/tmp/wechat-preview.html`
-5. Open with Playwright, take a screenshot, show to user
-6. Ask: "排版满意吗？需要调整什么？"
-7. If user wants changes, go back to Phase 2
+5. **打开预览给用户看**：`open /tmp/wechat-preview.html`（系统浏览器，用户可在底部点「复制到剪贴板」）
+6. **可选：Claude 自验证排版**——Playwright MCP 不支持 file:// 协议，必须先起本地 http server：
+   ```bash
+   cd /tmp && python3 -m http.server 8765 &
+   ```
+   然后让 Playwright `navigate` 到 `http://localhost:8765/wechat-preview.html`，`browser_take_screenshot` 后用 `kill %1` 关闭 server。截图文件落地目录是当前工作目录——记得清理或移到子目录，避免污染工作区根目录。
+7. Ask: "排版满意吗？需要调整什么？"
+8. If user wants changes, go back to Phase 2
 
 
 ## Auto-Recognition Rules
