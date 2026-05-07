@@ -159,7 +159,9 @@ fs.writeFileSync('/tmp/wechat-output.html', juice.inlineContent(html, css));
    ```bash
    cd /tmp && python3 -m http.server 8765 &
    ```
-   然后让 Playwright `navigate` 到 `http://localhost:8765/wechat-preview.html`，`browser_take_screenshot` 后用 `kill %1` 关闭 server。截图文件落地目录是当前工作目录——记得清理或移到子目录，避免污染工作区根目录。
+   然后让 Playwright `navigate` 到 `http://localhost:8765/wechat-preview.html`，`browser_take_screenshot` 后用 `pkill -f "http.server 8765"` 关闭 server。
+   - **截图 filename 必须用相对路径**，比如 `.playwright-mcp/skill-test.png` 或工作目录下的 `xxx.png`；写 `/tmp/xxx.png` 等绝对路径会被 MCP 以 `outside allowed roots` 拒绝。
+   - 截图看完后 `rm -rf .playwright-mcp` 清理，避免污染工作区。
 7. Ask: "排版满意吗？需要调整什么？"
 8. If user wants changes, go back to Phase 2
 
