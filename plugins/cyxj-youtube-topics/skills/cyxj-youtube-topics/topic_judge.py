@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """选题判断层：聚类后做硬信号 + 粗筛 + 字幕抓取。
 
-输入（从 stdin 或 argv[1]）：聚类后的 topics JSON，同 write_topics.py 的格式：
-    [{"topic": "...", "is_new": true|false, "existing_topic_id": "...",
-      "videos": [{...}]}]
+输入（从 stdin 或 argv[1]）：聚类结果 JSON。两种结构兼容：
+  1. 新结构：{"clusters": [...], "zh_topics": [...]}
+  2. 旧结构（兼容）：裸数组，等同于 clusters
+  clusters 元素：{"topic": "...", "is_new": true|false,
+                 "existing_topic_id": "...", "videos": [{...}]}
+  zh_topics 是中文区话题归类，本脚本不处理只透传。
 
-输出（到 stdout）：加了 signals、triage、subtitles 三个字段的 JSON。
+输出（到 stdout）：统一新结构 {"clusters": [...], "zh_topics": [...]}，
+clusters 每条加 signals、triage、subtitles 三字段。
 verdict 本身（值得做/观望/跟风/跳过 + reason + angle）不在这里生成——
 由 Claude 主流程读 signals + 字幕 + 用户画像后用 LLM 生成，再合并回数据。
 """
@@ -158,7 +162,14 @@ def main():
     if not raw.strip():
         print("错误：未收到聚类后的 topics JSON", file=sys.stderr)
         sys.exit(1)
-    clusters = json.loads(raw)
+    data = json.loads(raw)
+
+    if isinstance(data, list):
+        clusters = data
+        zh_topics = []
+    else:
+        clusters = data.get("clusters", [])
+        zh_topics = data.get("zh_topics", [])
 
     index = load_index()
     index_map = {t["id"]: t for t in index.get("topics", [])}
@@ -202,10 +213,11 @@ def main():
     print(
         f"判断层：{fetch_count} 进精筛抓字幕，"
         f"{skip_subtitle_count} 精筛跳过字幕，"
-        f"{triage_skip_count} 粗筛砍",
+        f"{triage_skip_count} 粗筛砍，"
+        f"中文区透传 {len(zh_topics)} 个话题",
         file=sys.stderr,
     )
-    print(json.dumps(enriched, ensure_ascii=False, indent=2))
+    print(json.dumps({"clusters": enriched, "zh_topics": zh_topics}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

@@ -462,7 +462,15 @@ def main():
         print("错误：未收到输入数据", file=sys.stderr)
         sys.exit(1)
 
-    topics = json.loads(raw)
+    data = json.loads(raw)
+    if isinstance(data, list):
+        # 兼容旧结构：裸数组等同于 clusters
+        topics = data
+        zh_topics = []
+    else:
+        topics = data.get("clusters", [])
+        zh_topics = data.get("zh_topics", [])
+
     TOPIC_DIR.mkdir(parents=True, exist_ok=True)
 
     # 加载话题索引和创作者索引
@@ -611,6 +619,10 @@ def main():
     follow_count = len(buckets["跟风"])
     skip_count = len(buckets["跳过"])
 
+    # ── 中文区参考统计 ──
+    zh_videos_count = sum(len(t.get("videos", [])) for t in zh_topics)
+    zh_topics_count = sum(1 for t in zh_topics if t.get("videos"))
+
     # ── 构建 Markdown ──
 
     all_topic_names = [g["topic"] for g in topics]
@@ -627,6 +639,8 @@ verdict_worth_doing: {worth_count}
 verdict_watching: {watch_count}
 verdict_follow: {follow_count}
 verdict_skip: {skip_count}
+zh_topics_count: {zh_topics_count}
+zh_videos_count: {zh_videos_count}
 topics:
 {topics_yaml}
 cssclasses:
@@ -678,6 +692,31 @@ cssclasses:
         sections.append(f"## 📋 跳过（{skip_count} 个）")
         for g, entry in buckets["跳过"]:
             sections.append(build_oneliner(g, entry, quality_channels))
+
+    # 中文区参考（按话题分组，零结果整段跳过）
+    if zh_topics and zh_videos_count > 0:
+        zh_lines = [
+            f"## 🪞 中文区参考（{zh_topics_count} 个话题 · {zh_videos_count} 个视频）",
+            "> 中文区最近 48 小时已发布的相关视频。决定做某个选题前可以扫一眼，"
+            "看中文 up 主有没有做过同款，点进去参考人家怎么做的。",
+            "",
+        ]
+        for t in zh_topics:
+            videos = t.get("videos", [])
+            if not videos:
+                continue
+            topic_name = t.get("topic", "其他")
+            zh_lines.append(f"### {topic_name}（{len(videos)} 个）")
+            for v in videos:
+                # 防 markdown 链接破坏：标题里的 [ ] 替换成 ( )
+                title = (v.get("title", "") or "").replace("[", "(").replace("]", ")")
+                channel = v.get("channel", "")
+                rel_time = v.get("relative_time", "")
+                vc = v.get("view_count_formatted", "")
+                url = v.get("url", "")
+                zh_lines.append(f"- [{title}]({url}) — {channel} · {rel_time} · {vc}")
+            zh_lines.append("")
+        sections.append("\n".join(zh_lines))
 
     content = frontmatter + "\n\n" + overview + "\n\n" + "\n\n".join(sections) + "\n"
 
