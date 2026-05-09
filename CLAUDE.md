@@ -75,5 +75,7 @@ cat .claude-plugin/marketplace.json | python3 -c "import sys,json; [print(p['nam
 | cyxj-obsidian-build | 纯 SKILL.md 指令 | Obsidian 库访问 |
 | cyxj-poster | Python + Gemini API | google-genai, pillow |
 | cyxj-youtube-topics | Python + YouTube Data API | requests |
+| cyxj-yt-creator | Python + Apify + Obsidian | requests |
 | cyxj-notebook-research | Python + Notebook LM | notebooklm-py, python-frontmatter |
 | cyxj-video-cover | Python + Gemini API | google-genai, pillow |
+| cyxj-geo | 纯 SKILL.md 指令 | 无 |

@@ -5,7 +5,7 @@
     "url": "https://github.com/chenhuajinchj"
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计、YouTube 选题发现、Notebook LM 研究",
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究",
     "version": "1.4.0"
   },
   "plugins": [
@@ -45,6 +45,11 @@
       "source": "./plugins/cyxj-youtube-topics"
     },
     {
+      "name": "cyxj-yt-creator",
+      "description": "Apify 博主用法研究：搜索 YouTube、抓字幕、按发布日期整理链接并写入 Obsidian 待发布稿",
+      "source": "./plugins/cyxj-yt-creator"
+    },
+    {
       "name": "cyxj-notebook-research",
       "description": "Notebook LM 批量研究：将选题库视频提交 Google Notebook LM，拉取转录稿和报告",
       "source": "./plugins/cyxj-notebook-research"
@@ -53,6 +58,11 @@
       "name": "cyxj-video-cover",
       "description": "视频封面生成：一句话生成 IP 形象 3D 渲染风格封面，默认 4:3 + 3:4 双版本",
       "source": "./plugins/cyxj-video-cover"
+    },
+    {
+      "name": "cyxj-geo",
+      "description": "GEO 生成式搜索引擎优化部署：选词、写文、配图、发布、监控四步法，输出可直接执行的投放方案",
+      "source": "./plugins/cyxj-geo"
     }
   ]
 }
