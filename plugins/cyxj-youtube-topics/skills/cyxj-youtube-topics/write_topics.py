@@ -722,6 +722,20 @@ cssclasses:
 
     # 写入每日总览
     file_path = TOPIC_DIR / f"{filename_time} YouTube选题总览.md"
+
+    # 幂等保护：当天已有任何总览且 mtime < 5 分钟，认为是重复调用，跳过整个写盘流程
+    existing_today = list(TOPIC_DIR.glob(f"{today} *YouTube选题总览.md"))
+    recent = [p for p in existing_today if (now.timestamp() - p.stat().st_mtime) < 300]
+    if recent:
+        recent_path = recent[0]
+        print(
+            f"⚠️ 检测到 5 分钟内已有当日总览 {recent_path.name}，跳过本次写入（防重复执行）",
+            file=sys.stderr,
+        )
+        # 仍然输出 CYXJ_RESULT_FILE 让 launcher 抓到结果路径
+        print(f"CYXJ_RESULT_FILE={recent_path}")
+        return
+
     file_path.write_text(content, encoding="utf-8")
 
     # 把 verdict 写入话题索引的 last_judgment 字段（下次跑时 LLM 可见）
@@ -745,22 +759,40 @@ cssclasses:
     creator_data["creators"] = creators
     save_creators(creator_data)
 
-    # 追加判断日志（每行一条，事后回看"准不准"用）
+    # 写判断日志（按 (timestamp, topic_id) 去重合并：同次跑同话题只保留最新一条）
     log_path = TOPIC_DIR / "判断日志.jsonl"
-    with log_path.open("a", encoding="utf-8") as f:
-        for g, entry in all_pairs:
-            log_entry = {
-                "timestamp": timestamp,
-                "topic": g.get("topic", ""),
-                "topic_id": entry.get("id", ""),
-                "is_new": g.get("is_new", True),
-                "verdict": effective_verdict(g),
-                "signals": g.get("signals", {}),
-                "triage": g.get("triage", {}),
-                "videos_count": len(g.get("videos", [])),
-                "top_video_url": g.get("videos", [{}])[0].get("url", "") if g.get("videos") else "",
-            }
-            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+    new_entries = []
+    for g, entry in all_pairs:
+        new_entries.append({
+            "timestamp": timestamp,
+            "topic": g.get("topic", ""),
+            "topic_id": entry.get("id", ""),
+            "is_new": g.get("is_new", True),
+            "verdict": effective_verdict(g),
+            "signals": g.get("signals", {}),
+            "triage": g.get("triage", {}),
+            "videos_count": len(g.get("videos", [])),
+            "top_video_url": g.get("videos", [{}])[0].get("url", "") if g.get("videos") else "",
+        })
+
+    existing_entries = []
+    if log_path.exists():
+        for line in log_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                existing_entries.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue  # 容错：损坏行直接丢弃
+
+    new_keys = {(e["timestamp"], e.get("topic_id", "")) for e in new_entries}
+    merged = [e for e in existing_entries
+              if (e.get("timestamp", ""), e.get("topic_id", "")) not in new_keys] + new_entries
+    log_path.write_text(
+        "\n".join(json.dumps(e, ensure_ascii=False) for e in merged) + "\n",
+        encoding="utf-8",
+    )
 
     # 最后一步：总览 + 索引 + 日志都写完了，标记视频为"已见"是安全的。
     # 如果上面任何一步失败，这里不会执行，下次跑仍能重新捞到。
