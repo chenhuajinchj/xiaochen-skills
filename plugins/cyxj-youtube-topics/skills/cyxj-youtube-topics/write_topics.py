@@ -136,10 +136,12 @@ def compute_signals(entry: dict, today: str, this_run_count: int) -> dict:
     }
 
 
-def update_creator(creators: dict, channel: str, views: int, today: str):
-    """更新单个创作者的统计数据"""
+def update_creator(creators: dict, channel: str, channel_id: str, views: int, today: str):
+    """更新单个创作者的统计数据。channel_id 用于信任频道自动晋升机制（youtube_search.py 依赖）。
+    旧记录无 channel_id 字段的，遇到非空值会自动 backfill。"""
     if channel not in creators:
         creators[channel] = {
+            "channel_id": channel_id,
             "total_videos": 0,
             "total_views": 0,
             "avg_views": 0,
@@ -152,6 +154,9 @@ def update_creator(creators: dict, channel: str, views: int, today: str):
             "tags": [],
         }
     c = creators[channel]
+    # Backfill：旧记录没有 channel_id 时补上
+    if channel_id and not c.get("channel_id"):
+        c["channel_id"] = channel_id
     c["total_videos"] += 1
     c["total_views"] += views
     c["max_views"] = max(c.get("max_views", 0), views)
@@ -583,8 +588,9 @@ def main():
     for g in topics:
         for v in g["videos"]:
             channel = v["channel"]
+            channel_id = v.get("channel_id", "")
             views = parse_view_count(v.get("view_count_formatted", "0"))
-            update_creator(creators, channel, views, today)
+            update_creator(creators, channel, channel_id, views, today)
             seen_channels_today.add(channel)
     # 更新出现期数（每个频道每天只算一次）
     for ch in seen_channels_today:

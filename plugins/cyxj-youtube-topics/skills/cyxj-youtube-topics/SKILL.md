@@ -125,7 +125,7 @@ cat "$CYXJ_TOPIC_DIR/话题索引.json"
     {
       "topic": "中文话题名",
       "is_new": true,
-      "videos": [{title, url, channel, ...}]
+      "videos": [{video_id, title, url, channel, channel_id, source, ...}]
     },
     {
       "topic": "中文话题名",
@@ -146,6 +146,8 @@ cat "$CYXJ_TOPIC_DIR/话题索引.json"
   ]
 }
 ```
+
+**重要**：clusters.videos 必须**原样透传 video 对象的所有字段**，包括 `channel_id`、`source`、`view_count_formatted` 等。这些字段被下游的创作者索引（auto-promotion 机制）依赖，丢失会导致博主信任名单失效。
 
 如果 `/tmp/yt_zh_reference.json` 是空数组（中文区零结果），`zh_topics` 也输出空数组 `[]`。
 
