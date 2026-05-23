@@ -1,0 +1,1333 @@
+/* Orange Editorial Theme for WeChat Official Account */
+/* 暖橙 #E8763C × 米黄纸感 #F2E6CC × 深棕 #2A1F18 */
+/* Brutalist 印刷感：2px 描边 + 6px 实心阴影 + 网点底纹 */
+/* 适用题材：AI 行业观察、深度长稿、海报式排版 */
+
+/*
+  WeChat 强制约束（与本主题配合时必须遵守）：
+  1. 整篇文章必须包裹在 ONE 大 <section class="article"> 里（包括 hero 在内）
+     — 公众号会在相邻 <section> 兄弟元素之间插白色间隙
+  2. 章节之间用 .spacer 米色占位条，不要用 margin
+  3. 禁用 position:absolute / writing-mode:vertical-rl
+*/
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "PingFang SC", -apple-system, "system-ui", "Helvetica Neue", sans-serif;
+}
+
+/* === Container === */
+.article {
+  max-width: 578px;
+  margin: 0 auto;
+  padding: 0;
+  background: #F2E6CC;
+  color: #2A1F18;
+  line-height: 1.8;
+  letter-spacing: 0.3px;
+}
+
+/* === Hero (Editorial Magazine Cover) === */
+.hero {
+  margin: 0;
+  padding: 0;
+  background: #E8763C;
+  background-image: radial-gradient(rgba(42,31,24,0.10) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+/* Hero top ticker */
+.hero-ticker {
+  background: #F2E6CC;
+  border-bottom: 2px solid #2A1F18;
+  padding: 8px 24px;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 5px;
+  color: #2A1F18;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Hero corner tags row */
+.hero-corner {
+  padding: 20px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-issue {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #2A1F18;
+  font-weight: 700;
+}
+
+.hero-issue-dash {
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  background: #2A1F18;
+}
+
+.hero-cat {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #2A1F18;
+  font-weight: 700;
+}
+
+/* Display title */
+.hero-title {
+  padding: 14px 24px 4px;
+}
+
+.hero-title h1 {
+  margin: 0;
+  padding: 0;
+  font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+  font-weight: 900;
+  font-size: 38px;
+  line-height: 1.0;
+  letter-spacing: -1px;
+  color: #F4EBD6;
+  text-shadow: 1px 1px 0 rgba(42,31,24,0.25);
+}
+
+.hero-title-arrow {
+  display: inline-block;
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-size: 42px;
+  vertical-align: -3px;
+  color: #F4EBD6;
+  margin-left: 4px;
+}
+
+/* Subtitle two-column block (small caps + sentence) */
+.hero-subtitle {
+  padding: 14px 24px 0;
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.hero-eyebrow {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #2A1F18;
+  font-weight: 700;
+  line-height: 1.4;
+  flex-shrink: 0;
+  width: 90px;
+}
+
+.hero-deck {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #2A1F18;
+  letter-spacing: 0.3px;
+}
+
+/* Author byline card (印章式) */
+.hero-author {
+  margin: 18px 24px 0;
+  background: #F2E6CC;
+  border: 2px solid #2A1F18;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-ip {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border: 2px solid #2A1F18;
+  background: #E5DAC2;
+}
+
+.hero-ip img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.hero-byline {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-byline-label {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #7A5A3E;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.hero-author-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #2A1F18;
+  letter-spacing: 0.5px;
+}
+
+.hero-author-tags {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #2A1F18;
+  text-align: right;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+/* Hero bottom bleed — 防止 hero 与 body 之间的 WeChat 白线 */
+.hero-bleed {
+  height: 22px;
+  background: #E8763C;
+}
+
+.hero-bleed-cream {
+  height: 30px;
+  background: #F2E6CC;
+}
+
+/* === Body container（嵌在 .article 里，跟 hero 同一父级）=== */
+.body {
+  padding: 0 22px;
+  background: #F2E6CC;
+  border-top: 30px solid #F2E6CC;
+}
+
+/* Spacer — 章节之间的米色占位（避免用 margin 触发兄弟间隙）*/
+.spacer {
+  height: 36px;
+  background: #F2E6CC;
+}
+
+/* === Body Text === */
+p {
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.85;
+  letter-spacing: 0.3px;
+  color: #2A1F18;
+}
+
+strong {
+  font-weight: 800;
+  color: #B14E1E;
+}
+
+/* Highlight: 重要词汇带橙色下划线 + 浅米色高光 */
+.hl, strong.hl {
+  font-weight: 800;
+  color: #B14E1E;
+  background: #F4EBD6;
+  padding: 0 4px;
+  border-bottom: 2px solid #B14E1E;
+}
+
+/* === Chapter Section（橙底网点 + 84px 大数字）=== */
+.chapter {
+  border-top: 2px solid #2A1F18;
+  border-bottom: 2px solid #2A1F18;
+  background: #E8763C;
+  background-image: radial-gradient(rgba(42,31,24,0.10) 1px, transparent 1px);
+  background-size: 3px 3px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.chapter-num {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 84px;
+  line-height: 0.85;
+  color: #F4EBD6;
+  font-weight: 400;
+  letter-spacing: -4px;
+  text-shadow: 2px 2px 0 rgba(42,31,24,0.2);
+  flex-shrink: 0;
+}
+
+.chapter-right {
+  flex: 1;
+}
+
+.chapter-tag {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #2A1F18;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.chapter-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #F4EBD6;
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 0 rgba(42,31,24,0.2);
+}
+
+/* Chapter 反色变体（黑底橙数字，用于结论/总结章节）*/
+.chapter-dark {
+  background: #2A1F18;
+  background-image: none;
+}
+
+.chapter-dark .chapter-num {
+  color: #E8763C;
+  text-shadow: none;
+}
+
+.chapter-dark .chapter-tag {
+  color: #F4EBD6;
+}
+
+.chapter-dark .chapter-title {
+  color: #F4EBD6;
+  text-shadow: none;
+}
+
+/* === Sub-heading Pill === */
+h3 {
+  margin: 28px 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #2A1F18;
+  line-height: 1.4;
+}
+
+.pill {
+  display: inline-block;
+  background: #2A1F18;
+  color: #F4EBD6;
+  padding: 4px 12px;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+/* === Pull Quote（大引号 flex 两列 + 橙色左竖线）=== */
+.quote {
+  margin: 24px 0;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.quote-mark {
+  font-family: "Bebas Neue", serif;
+  font-size: 60px;
+  line-height: 0.7;
+  color: #E8763C;
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+.quote-text {
+  flex: 1;
+  padding: 6px 0 6px 14px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.5;
+  color: #2A1F18;
+  letter-spacing: 0.3px;
+  border-left: 3px solid #E8763C;
+}
+
+/* === Image Card（白底 + 2px 描边 + 6px offset 实心阴影）=== */
+.img-card {
+  margin: 22px 0;
+  padding: 6px;
+  background: #FFFFFF;
+  border: 2px solid #2A1F18;
+  box-shadow: 6px 6px 0 #2A1F18;
+}
+
+.img-card img {
+  width: 100%;
+  display: block;
+  filter: contrast(1.05);
+}
+
+.img-caption {
+  padding: 10px 6px 4px;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #5A4636;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* === Stat Callout（双栏数据对比）=== */
+.stat-callout {
+  margin: 24px 0;
+  padding: 0;
+  border: 2px solid #2A1F18;
+  background: #F4EBD6;
+}
+
+.stat-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 2px solid #2A1F18;
+}
+
+.stat-cell {
+  flex: 1;
+  padding: 14px 16px;
+  border-right: 2px solid #2A1F18;
+}
+
+.stat-cell:last-child {
+  border-right: none;
+  background: #E5D9BD;
+}
+
+.stat-label {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #7A5A3E;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 38px;
+  line-height: 1;
+  color: #E8763C;
+  font-weight: 400;
+  letter-spacing: -1px;
+}
+
+.stat-cell:last-child .stat-value {
+  color: #2A1F18;
+}
+
+.stat-footnote {
+  padding: 10px 14px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #5A4636;
+  line-height: 1.5;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-weight: 600;
+}
+
+/* === List Card（票据风 dashed 分隔）=== */
+.list-card {
+  margin: 18px 0;
+  border: 2px solid #2A1F18;
+  background: #F4EBD6;
+  padding: 0;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px dashed #2A1F18;
+  font-size: 14px;
+  color: #2A1F18;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin: 0;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-num {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-weight: 400;
+  color: #E8763C;
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 28px;
+}
+
+/* === Timeline（黑表头 + 时间 + 事件，最新行橙底反白）=== */
+.timeline {
+  margin: 14px 0 22px;
+  border: 2px solid #2A1F18;
+  background: #F4EBD6;
+}
+
+.timeline-head {
+  display: flex;
+  background: #2A1F18;
+  color: #F4EBD6;
+  padding: 8px 14px;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+.timeline-head-year {
+  width: 88px;
+  flex-shrink: 0;
+}
+
+.timeline-head-event {
+  flex: 1;
+}
+
+.timeline-row {
+  display: flex;
+  padding: 12px 14px;
+  border-bottom: 1px dashed rgba(42,31,24,0.3);
+  font-size: 14px;
+  line-height: 1.6;
+  align-items: flex-start;
+}
+
+.timeline-row:last-child {
+  border-bottom: none;
+}
+
+.timeline-year {
+  width: 88px;
+  flex-shrink: 0;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-weight: 400;
+  color: #E8763C;
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.timeline-event {
+  flex: 1;
+  color: #2A1F18;
+  letter-spacing: 0.2px;
+}
+
+.timeline-row-current {
+  background: #E8763C;
+}
+
+.timeline-row-current .timeline-year {
+  color: #F4EBD6;
+}
+
+.timeline-row-current .timeline-event {
+  color: #F4EBD6;
+  font-weight: 700;
+}
+
+/* === Keyword Card（黑底 + 橙色 offset 阴影，大字概念锚点）=== */
+.keyword-card {
+  margin: 6px 0 18px;
+  padding: 18px 18px 14px;
+  background: #2A1F18;
+  color: #F4EBD6;
+  border: 2px solid #2A1F18;
+  box-shadow: 6px 6px 0 #E8763C;
+}
+
+.keyword-label {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #E8763C;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.keyword-text {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 46px;
+  line-height: 0.95;
+  font-weight: 400;
+  letter-spacing: -1.5px;
+  color: #F4EBD6;
+}
+
+.keyword-sub {
+  font-size: 24px;
+  color: #E8763C;
+  letter-spacing: 1px;
+}
+
+/* === Layer List（洋葱式 L1 L2 L3 L4，最外层 L4 橙底反白）=== */
+.layer-list {
+  margin: 18px 0;
+  border: 2px solid #2A1F18;
+  background: #F4EBD6;
+}
+
+.layer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-bottom: 1px dashed rgba(42,31,24,0.3);
+}
+
+.layer:last-child {
+  border-bottom: none;
+}
+
+.layer-num {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  color: #E8763C;
+  font-weight: 400;
+  font-size: 42px;
+  line-height: 0.9;
+  flex-shrink: 0;
+  width: 54px;
+  letter-spacing: -2px;
+}
+
+.layer-body {
+  flex: 1;
+}
+
+.layer-eyebrow {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #7A5A3E;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.layer-title {
+  font-size: 14px;
+  color: #2A1F18;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+}
+
+.layer-outer {
+  background: #E8763C;
+  color: #F4EBD6;
+}
+
+.layer-outer .layer-num {
+  color: #F4EBD6;
+}
+
+.layer-outer .layer-eyebrow {
+  color: #2A1F18;
+}
+
+.layer-outer .layer-title {
+  color: #F4EBD6;
+}
+
+/* === Growth Row（简易横条形增长可视化）=== */
+.growth {
+  margin: 18px 0;
+  border: 2px solid #2A1F18;
+  background: #F4EBD6;
+}
+
+.growth-head {
+  display: flex;
+  background: #2A1F18;
+  color: #F4EBD6;
+  padding: 8px 14px;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+.growth-head-date {
+  width: 88px;
+  flex-shrink: 0;
+}
+
+.growth-head-share {
+  flex: 1;
+}
+
+.growth-row {
+  display: flex;
+  padding: 14px;
+  border-bottom: 1px dashed rgba(42,31,24,0.3);
+  align-items: center;
+}
+
+.growth-row:last-child {
+  border-bottom: none;
+}
+
+.growth-date {
+  width: 88px;
+  flex-shrink: 0;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-weight: 400;
+  color: #7A5A3E;
+  font-size: 18px;
+}
+
+.growth-bar-cell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.growth-bar {
+  height: 8px;
+  background: #E8763C;
+  flex-shrink: 0;
+}
+
+.growth-value {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-weight: 400;
+  color: #7A5A3E;
+  font-size: 18px;
+}
+
+.growth-row-current {
+  background: #E8763C;
+  color: #F4EBD6;
+}
+
+.growth-row-current .growth-date {
+  color: #F4EBD6;
+}
+
+.growth-row-current .growth-bar {
+  background: #F4EBD6;
+}
+
+.growth-row-current .growth-value {
+  color: #F4EBD6;
+  font-size: 28px;
+  letter-spacing: -0.5px;
+}
+
+/* === Poster Block（中央 hero word，海报式大字）=== */
+.poster {
+  margin: 18px 0;
+  padding: 18px 16px;
+  background: #E8763C;
+  border: 2px solid #2A1F18;
+  text-align: center;
+  background-image: radial-gradient(rgba(42,31,24,0.12) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+.poster-eyebrow {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #2A1F18;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.poster-text {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 64px;
+  line-height: 0.9;
+  font-weight: 400;
+  letter-spacing: -2px;
+  color: #F4EBD6;
+  text-shadow: 2px 2px 0 rgba(42,31,24,0.18);
+}
+
+.poster-cn {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2A1F18;
+  letter-spacing: 2px;
+  margin-top: 6px;
+}
+
+/* Verdict 强力版（结论用，文字更大）*/
+.poster-verdict .poster-text {
+  font-family: "PingFang SC", sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.5px;
+}
+
+.poster-verdict .poster-cn {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: #2A1F18;
+  font-weight: 400;
+  margin-top: 6px;
+}
+
+/* === Dark Callout（黑底反白 takeaway / 重要结论）=== */
+.callout {
+  margin: 20px 0;
+  padding: 18px;
+  background: #F4EBD6;
+  border: 2px solid #2A1F18;
+  box-shadow: 6px 6px 0 #2A1F18;
+}
+
+.callout-title {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #B14E1E;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.callout p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #2A1F18;
+  margin-bottom: 0;
+}
+
+/* 黑底 takeaway 变体 */
+.callout-dark {
+  background: #2A1F18;
+  color: #F4EBD6;
+  box-shadow: 6px 6px 0 #E8763C;
+}
+
+.callout-dark .callout-title {
+  color: #E8763C;
+}
+
+.callout-dark p,
+.callout-dark .callout-text {
+  color: #F4EBD6;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.55;
+  letter-spacing: 0.3px;
+}
+
+/* Warn / Tip 变体（保留兼容旧 .callout-warn / .callout-tip 标签）*/
+.callout-warn {
+  background: #F4EBD6;
+  border-color: #B14E1E;
+  box-shadow: 6px 6px 0 #B14E1E;
+}
+
+.callout-warn .callout-title {
+  color: #B14E1E;
+}
+
+.callout-tip {
+  background: #F4EBD6;
+  border-color: #2A1F18;
+  box-shadow: 6px 6px 0 #E8763C;
+}
+
+.callout-tip .callout-title {
+  color: #2A1F18;
+}
+
+/* === Prediction Card（橙色表头 + 米色内容区）=== */
+.prediction {
+  margin: 20px 0;
+  border: 2px solid #2A1F18;
+  background: #F4EBD6;
+}
+
+.prediction-head {
+  background: #E8763C;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 2px solid #2A1F18;
+}
+
+.prediction-label {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #2A1F18;
+  font-weight: 700;
+  background: #F4EBD6;
+  padding: 4px 8px;
+}
+
+.prediction-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 900;
+  color: #F4EBD6;
+  letter-spacing: 0.3px;
+  line-height: 1.3;
+}
+
+.prediction-body {
+  padding: 14px;
+}
+
+.prediction-body p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #2A1F18;
+  letter-spacing: 0.2px;
+  margin-bottom: 12px;
+}
+
+.prediction-body p:last-child {
+  margin-bottom: 0;
+}
+
+.prediction-body .prediction-note {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #5A4636;
+}
+
+/* === Knowledge Card（保留与原 SKILL 兼容；橙色编辑风用米色票据卡）=== */
+.card {
+  margin: 20px 0;
+  padding: 16px 18px;
+  background: #F4EBD6;
+  border: 2px solid #2A1F18;
+}
+
+.card-title {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #B14E1E;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.card-item {
+  margin-bottom: 10px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #2A1F18;
+}
+
+.card-item:last-child {
+  margin-bottom: 0;
+}
+
+.card-item strong {
+  color: #B14E1E;
+  font-weight: 800;
+}
+
+/* === Dark Card（用于规则清单 / 终端感）=== */
+.card-dark {
+  margin: 20px 0;
+  padding: 20px;
+  background: #2A1F18;
+  border: 2px solid #2A1F18;
+  box-shadow: 6px 6px 0 #E8763C;
+}
+
+.card-dark-title {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #E8763C;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.card-dark-item {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #F4EBD6;
+  margin-bottom: 8px;
+}
+
+.card-dark-item:last-child {
+  margin-bottom: 0;
+}
+
+/* === Steps List === */
+.steps {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  border: 2px solid #2A1F18;
+  background: #F4EBD6;
+}
+
+.steps td {
+  padding: 14px;
+  vertical-align: top;
+  border: none;
+  border-bottom: 1px dashed rgba(42,31,24,0.3);
+}
+
+.steps tr:last-child td {
+  border-bottom: none;
+}
+
+.step-num-cell {
+  width: 56px;
+  padding-right: 0;
+}
+
+.step-num {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  background: #E8763C;
+  color: #F4EBD6;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 36px;
+  border: 2px solid #2A1F18;
+}
+
+.step-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #2A1F18;
+  margin: 0;
+}
+
+.step-text strong {
+  color: #B14E1E;
+}
+
+/* === Grid Cards === */
+.grid-cards {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 10px;
+  margin: 20px -10px;
+}
+
+.grid-card {
+  background: #F4EBD6;
+  border: 2px solid #2A1F18;
+  padding: 16px;
+  vertical-align: top;
+  width: 50%;
+}
+
+.grid-card-tag {
+  display: inline-block;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #F4EBD6;
+  background: #E8763C;
+  padding: 3px 10px;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+}
+
+.grid-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #2A1F18;
+  margin-bottom: 6px;
+  letter-spacing: 0.3px;
+}
+
+.grid-card-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #5A4636;
+  margin: 0;
+}
+
+/* === Chat Bubbles（保留与现有兼容）=== */
+.chat-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #F4EBD6;
+  border: 2px solid #2A1F18;
+  margin: 20px 0;
+}
+
+.chat-table td {
+  padding: 12px;
+  vertical-align: top;
+  border: none;
+}
+
+.chat-table .avatar-cell {
+  width: 48px;
+  padding-right: 0;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  background: #E8763C;
+  color: #F4EBD6;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #2A1F18;
+}
+
+.chat-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2A1F18;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.chat-bubble {
+  background: #FFFFFF;
+  border: 2px solid #2A1F18;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #2A1F18;
+}
+
+/* === Center Quote（结尾箭头 + 大字感言）=== */
+.center-quote {
+  margin: 32px 0 28px;
+  text-align: center;
+}
+
+.center-quote-arrows {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #7A5A3E;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.center-quote-text {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.55;
+  color: #2A1F18;
+  letter-spacing: 0.5px;
+}
+
+/* === P.S. Divider（横线 + 小标 + 横线）=== */
+.divider-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 30px 0 14px;
+}
+
+.divider-eyebrow-line {
+  height: 1px;
+  background: #2A1F18;
+  flex: 1;
+}
+
+.divider-eyebrow-label {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #2A1F18;
+  font-weight: 700;
+}
+
+/* === Divider hr === */
+hr {
+  border: none;
+  border-top: 2px dashed #2A1F18;
+  margin: 28px 0;
+}
+
+/* === Footer Card（黑底 + 橙表头 + Sign Off）=== */
+.footer-card {
+  margin: 32px 0 28px;
+  padding: 0;
+  border: 2px solid #2A1F18;
+  background: #2A1F18;
+  color: #F4EBD6;
+  box-shadow: 6px 6px 0 #E8763C;
+}
+
+.footer-head {
+  background: #E8763C;
+  color: #2A1F18;
+  padding: 8px 14px;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 2px solid #2A1F18;
+}
+
+.footer-body {
+  padding: 26px 20px;
+  text-align: center;
+}
+
+.footer-label {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: #E8763C;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.footer-author {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #F4EBD6;
+  margin-bottom: 14px;
+}
+
+.footer-desc {
+  font-size: 13px;
+  color: #D6C8A8;
+  line-height: 1.7;
+  letter-spacing: 0.5px;
+}
+
+.footer-sign-row {
+  margin: 18px 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.footer-sign-line {
+  height: 1px;
+  background: #7A5A3E;
+  flex: 1;
+  max-width: 50px;
+}
+
+.footer-sign {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #7A5A3E;
+  font-weight: 600;
+}
+
+.footer-thanks {
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 5px;
+  color: #E8763C;
+  margin-top: 14px;
+  font-weight: 700;
+}
+
+/* === End Ticker（黑底橙字跑马灯字条）=== */
+.ticker-end {
+  margin: 0 -22px;
+  padding: 14px 22px;
+  background: #2A1F18;
+  color: #E8763C;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* === Code Block === */
+pre {
+  background: #2A1F18;
+  border: 2px solid #2A1F18;
+  padding: 14px 16px;
+  margin: 16px 0;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #F4EBD6;
+  box-shadow: 6px 6px 0 #E8763C;
+}
+
+code {
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 14px;
+  background: #F4EBD6;
+  border: 1px solid #2A1F18;
+  padding: 1px 5px;
+  color: #B14E1E;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #F4EBD6;
+}
+
+/* === Table === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+  border: 2px solid #2A1F18;
+  background: #F4EBD6;
+}
+
+th {
+  background: #2A1F18;
+  color: #F4EBD6;
+  font-family: "Bebas Neue", "PingFang SC", sans-serif;
+  font-weight: 700;
+  padding: 10px 14px;
+  text-align: left;
+  letter-spacing: 2px;
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px dashed rgba(42,31,24,0.3);
+  color: #2A1F18;
+  line-height: 1.6;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
