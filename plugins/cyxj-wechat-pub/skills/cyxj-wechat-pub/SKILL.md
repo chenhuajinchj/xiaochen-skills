@@ -11,9 +11,21 @@ version: 1.0.0
 
 ## Files
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/theme-tatalab.css` - TATALAB 风格 CSS 主题
+- `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/theme-tatalab.css` - TATALAB 蓝色风格 CSS 主题（默认）
+- `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/theme-noir-gold.css` - 炭黑 + 暖金风格 CSS 主题（深度内容/商务调性）
 - `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/preview-template.html` - 预览 HTML 模板
 - `${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub/package.json` - npm 依赖（仅 juice）
+
+## Theme 选择
+
+排版前先决定用哪个主题（默认 tatalab）：
+
+| 主题文件 | 风格 | 适用题材 |
+|---------|------|---------|
+| `theme-tatalab.css` | 蓝色商务感（Material Blue 系：#1565C0 / #1976D2 / #BBDEFB） | AI 编程 / 运营干货 / 教程效率类，活泼亲和 |
+| `theme-noir-gold.css` | 炭黑 + 暖金沉稳感（#26262A 炭灰 Hero + #8A6D1A 金棕强调 + #FAF6EC 米黄引用块） | AI 行业观察 / 深度分析 / 长稿，沉稳权威 |
+
+调用 juice 时把 `theme-tatalab.css` 替换成想要的主题文件名即可，其他流程不变。Phase 0 内容审查时顺便判定主题：技术/教程类默认 tatalab；行业观察/深度分析/商业评论类问用户是否切 noir-gold。
 
 ## Workflow
 
