@@ -20,6 +20,25 @@ description: |
 
 如果你在执行过程中产生"是不是该再扫一次"的念头，停下——这是错的。流水线的完整性由 launcher 保证，不由你保证。
 
+## 🔁 断点续传机制（每步执行前必读）
+
+上一次跑可能在中间某步失败（budget 烧光 / 网络挂 / Ctrl+C），失败时 `/tmp/yt_*.json` 中间产物可能还在。**每步开始前先检查对应输出文件**，存在且新鲜则跳过该步：
+
+```bash
+# 模板：每一步开头先这样判断
+if [ -f /tmp/yt_videos.json ] && [ $(($(date +%s) - $(stat -f %m /tmp/yt_videos.json))) -lt 21600 ]; then
+  echo "复用现有 /tmp/yt_videos.json（6h 内）"
+else
+  python3 "$SKILL_DIR/youtube_search.py" > /tmp/yt_videos.json
+fi
+```
+
+**6h 阈值**：超过 6h 的中间产物视为过期（48h lookback 窗口已显著移位），重新跑。
+
+**LLM 步骤（第 3 步聚类 / 第 5 步 verdict）**：执行前先 `ls -la /tmp/yt_clusters.json /tmp/yt_final.json`，存在且新鲜则跳过判断动作，直接读文件进入下一步。
+
+**第 6 步 write_topics.py 不做断点续传**——一旦写盘就更新了 `.seen_video_ids.json`、话题索引、判断日志，没有"重复写入"概念。如果第 6 步已经跑过（看 `${CYXJ_TOPIC_DIR}` 下有今天的 `YYYY-MM-DD HH-MM YouTube选题总览.md`），直接终止流程并报告"今天已经跑过了"。
+
 ## 角色
 
 你是一个选题判断助手。任务不是把视频摆给用户看（那只是过滤器），而是**带理由地告诉用户哪些话题值得做、哪些是跟风、哪些该跳过**。理由比结论重要——好的理由能让用户反驳，反驳就是用户在思考选题。
