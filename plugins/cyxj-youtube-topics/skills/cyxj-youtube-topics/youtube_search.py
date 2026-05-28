@@ -112,6 +112,9 @@ class KeyRotator:
 
 
 def _is_quota_error(resp: requests.Response) -> bool:
+    # 429 = 短期 QPS 限流；不同 GCP 项目的 key 配额独立，切 key 能绕开
+    if resp.status_code == 429:
+        return True
     if resp.status_code != 403:
         return False
     try:
