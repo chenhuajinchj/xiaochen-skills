@@ -482,6 +482,19 @@ def build_oneliner(cluster: dict, entry: dict, quality_channels: set = None) -> 
 
 
 def main():
+    # ── Phase 硬锁 ──────────────────────────────────────────────
+    # 两段式 cron：Phase 1（数据准备 / 聚类，廉价模型）严禁写盘。CYXJ_PHASE=1 时直接拒绝，
+    # 从物理层杜绝廉价模型越界产出 .md/状态（否则会被 Phase 2 的 5 分钟幂等当成正式产出采用）。
+    # Phase 2 由 launcher 设 CYXJ_PHASE=2 放行；交互 / 手动跑不设此变量，正常放行。
+    if os.environ.get("CYXJ_PHASE") == "1":
+        print("CYXJ_PHASE1_WRITE_BLOCKED=1")
+        print(
+            "❌ write_topics.py 在 CYXJ_PHASE=1（第一阶段·数据准备）被硬锁禁止运行——"
+            "写盘 / verdict 属第二阶段（强模型）。这是防止廉价模型越界的物理保护。",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     # 读取输入
     if len(sys.argv) > 1:
         input_path = Path(sys.argv[1])
