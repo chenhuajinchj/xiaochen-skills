@@ -5,8 +5,8 @@
     "url": "https://github.com/chenhuajinchj"
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、逐字稿转文章、Astro 博客发布、PS 批量转 JPG",
-    "version": "1.7.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、逐字稿转文章、Astro 博客发布、PS 批量转 JPG",
+    "version": "1.8.0"
   },
   "plugins": [
     {
@@ -16,13 +16,8 @@
     },
     {
       "name": "cyxj-wechat-pub",
-      "description": "公众号排版发布：Obsidian MD → TATALAB 风格 HTML → 微信后台",
+      "description": "公众号排版发布：Obsidian MD → 公众号 HTML → 微信后台，内置 3 套主题（TATALAB 蓝 / 炭黑暖金 / 暖橙编辑）",
       "source": "./plugins/cyxj-wechat-pub"
-    },
-    {
-      "name": "cyxj-wechat-mask",
-      "description": "微信截图批量打码：头像、昵称、人名自动马赛克",
-      "source": "./plugins/cyxj-wechat-mask"
     },
     {
       "name": "cyxj-obsidian-build",

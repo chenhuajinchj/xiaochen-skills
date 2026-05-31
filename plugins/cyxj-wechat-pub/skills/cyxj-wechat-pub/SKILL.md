@@ -1,7 +1,8 @@
 ---
 name: cyxj-wechat-pub
 description: >
-  将 Obsidian Markdown 文章转换为 TATALAB 风格的高质量公众号排版。
+  将 Obsidian Markdown 文章转换为高质量公众号排版，内置 3 套 CSS 主题可选：
+  TATALAB 蓝（默认）、炭黑暖金（深度/商务）、暖橙编辑（编辑/海报风）。
   支持内容审查、打磨、IP 配图生成、预览确认，输出可直接粘贴到微信后台。
   触发词：发布到公众号、公众号排版、微信发布、排版文章、XCYJ 排版。
 version: 1.0.0

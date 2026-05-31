@@ -84,8 +84,7 @@ python3 -c "import json,os; reg={p['name'] for p in json.load(open('.claude-plug
 | Skill | 核心技术 | 外部依赖 | 已注册 |
 |-------|---------|---------|:--:|
 | cyxj-subfix | Python + Gemini API + Opus 审查 | google-genai, pysrt | ✓ |
-| cyxj-wechat-pub | CSS + HTML 模板 + juice（npm） | juice (npm) | ✓ |
-| cyxj-wechat-mask | Python (CnOCR/Pillow/jieba) | pillow, cnocr, onnxruntime, jieba | ✓ |
+| cyxj-wechat-pub | CSS + HTML 模板 + juice（npm），内置 3 套主题 | juice (npm) | ✓ |
 | cyxj-obsidian-build | 纯 SKILL.md 指令 | Obsidian 库访问 | ✓ |
 | cyxj-poster | Python + Gemini API | google-genai, pillow | ✓ |
 | cyxj-youtube-topics | Python + YouTube Data API | requests | ✓ |
