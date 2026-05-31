@@ -80,8 +80,12 @@ echo "Photoshop 启动中（会占用 PS 界面，每张约 2-4 秒）..."
 START=$(date +%s)
 osascript -e "tell application \"$PS_APP\" to do javascript file \"$JSX\"" >/dev/null
 
-if [ -f /tmp/cyxj_psjpg_export.log ]; then
-    grep -E '^\[(OK|FAIL)' /tmp/cyxj_psjpg_export.log || true
+# ExtendScript 在 Mac 上写日志用的是老式 \r 换行，整个日志会挤成一行，
+# 让下面所有 grep '^\[OK' 锚定行首匹配不到。先把 \r 统一成 \n 再处理。
+LOG=/tmp/cyxj_psjpg_export.log
+if [ -f "$LOG" ]; then
+    tr '\r' '\n' < "$LOG" > "$LOG.norm" && mv "$LOG.norm" "$LOG"
+    grep -E '^\[(OK|FAIL)' "$LOG" || true
 fi
 
 echo ""

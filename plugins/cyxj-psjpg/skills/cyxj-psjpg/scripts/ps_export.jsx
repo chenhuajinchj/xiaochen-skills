@@ -22,16 +22,18 @@ var outFolder = new Folder(outDir);
 if (!outFolder.exists) outFolder.create();
 
 // ---- 日志 ----
+// 用显式 "\n" 写换行（不用 writeln：它在 PS 里默认写 Mac 老式 \r，会让整个日志挤成一行，
+// 导致 psjpg.sh 里 grep '^\[OK' 锚定行首匹配不到、成功数误报为 0）。
 var logFile = new File("/tmp/cyxj_psjpg_export.log");
 logFile.open("w");
-logFile.writeln("Start: " + (new Date()).toString());
-logFile.writeln("Src: " + srcDir);
-logFile.writeln("Out: " + outDir);
-logFile.writeln("Quality: " + QUALITY + " (Progressive 3 Scans)");
+logFile.write("Start: " + (new Date()).toString() + "\n");
+logFile.write("Src: " + srcDir + "\n");
+logFile.write("Out: " + outDir + "\n");
+logFile.write("Quality: " + QUALITY + " (Progressive 3 Scans)\n");
 logFile.close();
 function log(msg) {
     logFile.open("a");
-    logFile.writeln(msg);
+    logFile.write(msg + "\n");
     logFile.close();
 }
 
