@@ -93,11 +93,15 @@ def resolve_faces(face_arg: str | None) -> list[Path]:
 
 
 def build_prompt(title: str, scene: str | None) -> str:
-    """构建封面 prompt。人在一侧、标题留白另一侧，高点击 YouTube 风格。"""
+    """构建封面 prompt。人在一侧、标题留白另一侧，高点击 YouTube 风格。
+
+    背景默认走简洁路线（纯色/弱虚化、少道具），让人物和标题主导画面，
+    避免背景太花抢视线。需要具体场景时用 --scene 传入。
+    """
     scene_line = (
         f"The person is in this scene: {scene}." if scene
-        else "Put the person in a scene that visually fits the title, "
-             "with a meaningful pose and relevant props."
+        else "Give the person a meaningful pose that fits the title; "
+             "keep the surroundings minimal, no clutter."
     )
     return (
         "Create a high click-through video cover / YouTube thumbnail. "
@@ -107,7 +111,9 @@ def build_prompt(title: str, scene: str | None) -> str:
         "vivid, confident, slightly excited expression. "
         "Leave clean space on the other side for a large bold Chinese title. "
         f"{scene_line} "
-        "Background: clean modern tech workspace, softly blurred, bright and professional. "
+        "Background: SIMPLE and CLEAN — a solid or softly gradient color, or a heavily "
+        "blurred minimal setting. Avoid busy or cluttered backgrounds; do NOT fill it with "
+        "many props, screens, or UI panels. Keep the subject and title clearly dominant. "
         f'Add this large bold Chinese title prominently: "{title}". '
         "The title text must be accurate, large, high-contrast and easy to read "
         "(black or white with an accent color outline). "

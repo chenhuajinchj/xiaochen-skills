@@ -54,7 +54,7 @@ python3 $SKILL_DIR/scripts/generate.py \
 - `--scene "场景描述"` — 手动指定人物动作/场景
 - `--model <model>` — 换模型（默认 gpt-image-2）
 
-### Step 4：展示结果
+### Step 4：展示结果，让用户挑
 
 用 Read 工具打开生成的封面展示给用户。每比例多张时，并列展示让用户挑。
 
@@ -63,6 +63,25 @@ python3 $SKILL_DIR/scripts/generate.py \
 - 调 `--title` 措辞
 - 换 `--face` 参考照片
 - 重新生成（多出几张挑）
+
+### Step 5：选定的封面过 cyxj-psjpg 转上传用 JPG
+
+生成的封面是 PNG。**用户挑定要用的封面后**，把这些选中的图过一遍
+[`cyxj-psjpg`](../../cyxj-psjpg) skill，转成统一规格的 JPG 并清理元数据痕迹
+（真 PS 导出，去掉来源痕迹，适合上传各平台）。
+
+为什么挑完再过：psjpg 走真 Photoshop，慢且占用 PS——只处理用户最终要用的几张，
+不浪费在没选中的图上。
+
+做法：
+1. 把用户选定的封面**复制到一个单独目录**（如 `<输出目录>/选定/`），避免把没选的也转了。
+2. **调用 `cyxj-psjpg` skill**，对这个目录跑它的转换脚本（psjpg 会输出到 `<目录>_psjpg/`）。
+   psjpg 是独立插件，用 Skill 工具调起它即可，由它用自己的 `${CLAUDE_PLUGIN_ROOT}` 定位脚本——
+   **不要**在本 skill 里写死 psjpg 的路径（两个插件装在不同缓存目录，路径不固定）。
+3. 把最终 JPG 位置告诉用户。
+
+前提：用户本机已装 `cyxj-psjpg`（及其依赖 Photoshop + exiftool）。没装就提示用户先装，
+或这一步可跳过（PNG 也能直接用）。
 
 ## 输出规格
 
@@ -81,7 +100,8 @@ python3 $SKILL_DIR/scripts/generate.py \
 
 - **真人**：你的照片重绘入场，保持本人长相（写实，不卡通/不 3D 化）
 - 人物在一侧（半身、看镜头、表情生动自信）+ 另一侧大标题留白
-- 背景：干净现代科技工位，柔焦虚化，明亮专业
+- 背景：**简洁为主**——纯色/弱渐变或重度虚化的极简环境，不堆道具/屏幕/UI，
+  让人物和标题主导画面（需要具体场景时用 `--scene` 临时加）
 - 大号加粗中文标题（高对比、描边），由 gpt-image-2 直接渲染
 - 高点击 YouTube 缩略图调性
 
@@ -98,3 +118,4 @@ python3 $SKILL_DIR/scripts/generate.py \
 - Python 3.11+（仅标准库）
 - 真人照片目录（默认 `~/Pictures/封面形象/`）
 - 密钥存储 `.env` 里的 `EO_BASE_URL` / `EO_API_KEY`
+- **可选**：`cyxj-psjpg` skill（Step 5 把选定封面转上传用 JPG；它本身需 Photoshop + exiftool）
