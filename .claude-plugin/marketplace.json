@@ -5,8 +5,8 @@
     "url": "https://github.com/chenhuajinchj"
   },
   "metadata": {
-    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究",
-    "version": "1.5.0"
+    "description": "小陈的 Claude Code 技能集：达芬奇字幕修正、公众号排版发布、微信截图打码、订阅成本计算、Obsidian 知识库编译、海报设计、YouTube 选题发现、博主用法研究、Notebook LM 研究、逐字稿转文章、Astro 博客发布",
+    "version": "1.6.0"
   },
   "plugins": [
     {
@@ -73,6 +73,16 @@
       "name": "cyxj-ps-export",
       "description": "批量过 PS：用本机 Photoshop 把一个目录的图统一导出为规格一致的 Progressive JPG",
       "source": "./plugins/cyxj-ps-export"
+    },
+    {
+      "name": "cyxj-transcript",
+      "description": "逐字稿转文章：去口语化、加小标题、数据转表格、原稿留文末，产出 Obsidian Markdown 草稿",
+      "source": "./plugins/cyxj-transcript"
+    },
+    {
+      "name": "cyxj-blog-pub",
+      "description": "Astro 博客发布：frontmatter 校验、kebab-case 命名、正文图片全用图床 URL，build 后部署",
+      "source": "./plugins/cyxj-blog-pub"
     }
   ]
 }
