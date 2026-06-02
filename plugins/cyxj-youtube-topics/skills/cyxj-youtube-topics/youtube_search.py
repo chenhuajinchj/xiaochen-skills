@@ -34,9 +34,9 @@ API_BASE = "https://www.googleapis.com/youtube/v3"
 
 # 第二段：硬过滤阈值
 MIN_VIEW_COUNT = 100
-MIN_DURATION_SECONDS = 300  # 5 分钟
+MIN_DURATION_SECONDS = 180  # 3 分钟（2026-06-02：含信任频道，统一砍 shorts）
 
-# 信任频道：召回阶段单独查询（绕开关键词竞争），过滤阶段豁免时长门槛。
+# 信任频道：召回阶段单独查询（绕开关键词竞争），并豁免关键词相关性复查；但仍受时长门槛约束（2026-06-02：不再豁免时长，shorts 一律砍）。
 # 种子列表保证 Day-1 即生效；之外的创作者由 load_promoted_channels() 从创作者索引自动晋升。
 SEED_TRUSTED_CHANNELS = [
     ("UCoy6cTJ7Tg0dqS-DI-_REsA", "Chase AI"),
@@ -289,8 +289,8 @@ def enrich_and_filter(rotator: KeyRotator | None, videos: list[dict]) -> list[di
         if NOISE_TITLE_WORDS.search(title):
             continue
 
-        # 时长 < 5 分钟（信任频道豁免：通过 source 字段判断，避免重复维护 channelId set）
-        if v["duration_seconds"] < MIN_DURATION_SECONDS and v.get("source") != "trusted_channel":
+        # 时长 < 3 分钟：一律砍（含信任频道；shorts 对选题无价值——2026-06-02 移除豁免）
+        if v["duration_seconds"] < MIN_DURATION_SECONDS:
             continue
 
         # 播放量 < 100
