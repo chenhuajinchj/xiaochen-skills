@@ -27,6 +27,17 @@ KEYWORDS = [
     "Claude Code update",       # 资讯更新
     "Anthropic Academy",        # A 社官方课程/教育
     "Claude Desktop",           # 桌面版动态
+    # Claude 同族（非 Code）—— 补「用 Claude 做X / 课程」这类此前漏网的视频
+    "Claude course",
+    "build with Claude",
+    "Claude for business",
+]
+
+# 爆款层：按播放量召回的宽词（少而宽，专抓被 order=date 埋掉的高播放视频）
+KEYWORDS_VIEWCOUNT = [
+    "Claude Code",
+    "Claude",
+    "Anthropic Claude",
 ]
 HOURS_WINDOW = max(1, min(168, int(os.environ.get("CYXJ_LOOKBACK_HOURS", "48"))))
 MAX_RESULTS_PER_KEYWORD = 50  # 拉满上限，search.list 无论取多少条都扣 100 点
@@ -175,50 +186,75 @@ def format_view_count(count: int) -> str:
 
 # ── 第一段：召回 ──────────────────────────────────────
 
-def recall(rotator: KeyRotator, published_after: str) -> list[dict]:
-    """多关键词搜索，尽量多拿候选，按 Video ID 去重"""
+def recall(
+    rotator: KeyRotator,
+    published_after: str,
+    keywords: list[str],
+    order: str = "date",
+    pages: int = 1,
+    critical: bool = True,
+) -> tuple[list[dict], int]:
+    """多关键词搜索，尽量多拿候选，按 Video ID 去重（本次调用内）。
+    order 控制排序（date / viewCount）；pages>1 时按 nextPageToken 翻页。
+    critical=True 时「全部关键词都首页失败」会 sys.exit（主召回用，判 API 死）；
+    补充层（deep/viewCount）应传 critical=False，单点抖动不拖垮整条流水线。
+    返回 (候选列表, 本函数发起的 search.list 调用次数)。"""
     all_videos = []
     seen_ids = set()
     failed_keywords = []
+    search_call_count = 0
 
-    for keyword in KEYWORDS:
-        try:
-            resp = youtube_get(rotator, "/search", {
+    for keyword in keywords:
+        page_token = None
+        for _ in range(max(1, pages)):
+            params = {
                 "q": keyword,
                 "part": "snippet",
                 "type": "video",
-                "order": "date",
+                "order": order,
                 "publishedAfter": published_after,
                 "relevanceLanguage": "en",
                 "maxResults": MAX_RESULTS_PER_KEYWORD,
-            }, timeout=30)
-        except Exception as e:
-            print(f"警告：关键词 '{keyword}' 搜索失败 ({e})", file=sys.stderr)
-            failed_keywords.append(keyword)
-            continue
+            }
+            if page_token:
+                params["pageToken"] = page_token
+            try:
+                resp = youtube_get(rotator, "/search", params, timeout=30)
+                search_call_count += 1
+            except Exception as e:
+                print(f"警告：关键词 '{keyword}' 搜索失败 ({e})", file=sys.stderr)
+                # 仅首页就失败才算该词「颗粒无收」；翻页中途失败（page_token 已有）不算整词失败
+                if page_token is None:
+                    failed_keywords.append(keyword)
+                break
 
-        for item in resp.json().get("items", []):
-            video_id = item["id"]["videoId"]
-            if video_id in seen_ids:
-                continue
-            seen_ids.add(video_id)
-            snippet = item["snippet"]
-            all_videos.append({
-                "video_id": video_id,
-                "title": snippet["title"],
-                "channel": snippet["channelTitle"],
-                "channel_id": snippet.get("channelId", ""),
-                "description": snippet.get("description", ""),
-                "published_at": snippet["publishedAt"],
-                "url": f"https://www.youtube.com/watch?v={video_id}",
-            })
+            data = resp.json()
+            for item in data.get("items", []):
+                video_id = item["id"]["videoId"]
+                if video_id in seen_ids:
+                    continue
+                seen_ids.add(video_id)
+                snippet = item["snippet"]
+                all_videos.append({
+                    "video_id": video_id,
+                    "title": snippet["title"],
+                    "channel": snippet["channelTitle"],
+                    "channel_id": snippet.get("channelId", ""),
+                    "description": snippet.get("description", ""),
+                    "published_at": snippet["publishedAt"],
+                    "url": f"https://www.youtube.com/watch?v={video_id}",
+                })
 
-    if len(failed_keywords) == len(KEYWORDS):
-        print(f"错误：所有 {len(KEYWORDS)} 个关键词搜索全部失败，疑似 API key 失效或网络问题", file=sys.stderr)
+            page_token = data.get("nextPageToken")
+            if not page_token:
+                break
+
+    if critical and keywords and len(failed_keywords) == len(keywords):
+        print(f"错误：所有 {len(keywords)} 个关键词搜索全部失败，疑似 API key 失效或网络问题", file=sys.stderr)
         sys.exit(1)
 
-    print(f"召回：{len(all_videos)} 个候选", file=sys.stderr)
-    return all_videos
+    print(f"召回（order={order}，{len(keywords)} 词，{search_call_count} 次调用）：{len(all_videos)} 个候选", file=sys.stderr)
+    return all_videos, search_call_count
 
 
 # ── 第二段：硬过滤 ──────────────────────────────────────
@@ -272,7 +308,7 @@ def enrich_and_filter(rotator: KeyRotator | None, videos: list[dict]) -> list[di
         # 视频仍由下游 LLM 聚类/判断阶段拦截。
         text = (title + " " + v.get("description", "")).lower()
         if v.get("source") != "trusted_channel" and not any(
-            kw in text for kw in ("claude code", "anthropic", "claude desktop")
+            kw in text for kw in ("claude", "anthropic")
         ):
             continue
 
@@ -339,6 +375,9 @@ def sort_and_output(videos: list[dict]) -> list[dict]:
         v["view_count_formatted"] = format_view_count(v["view_count"])
         mins, secs = divmod(v["duration_seconds"], 60)
         v["duration_formatted"] = f"{mins}分{secs}秒" if secs else f"{mins}分钟"
+        pub = datetime.fromisoformat(v["published_at"].replace("Z", "+00:00"))
+        hours = max((datetime.now(timezone.utc) - pub).total_seconds() / 3600, 1)
+        v["view_velocity"] = round(v["view_count"] / hours, 1)
 
     return videos
 
@@ -588,9 +627,16 @@ def main():
 
     # 1a. 关键词召回（Apify 模式下不跑——避免烧 YouTube quota）
     if rotator:
-        keyword_candidates = recall(rotator, published_after)
+        date_videos, n_date = recall(rotator, published_after, KEYWORDS, order="date")
+        deep_videos, n_deep = recall(rotator, published_after, ["Claude Code"], order="date", pages=2, critical=False)
+        view_videos, n_view = recall(rotator, published_after, KEYWORDS_VIEWCOUNT, order="viewCount", critical=False)
+        merged: dict[str, dict] = {}
+        for v in date_videos + deep_videos + view_videos:
+            merged.setdefault(v["video_id"], v)
+        keyword_candidates = list(merged.values())
         for v in keyword_candidates:
             v["source"] = "keyword"
+        print(f"召回搜索调用次数：date={n_date} + deep={n_deep} + viewCount={n_view} = {n_date + n_deep + n_view}", file=sys.stderr)
     else:
         print("信号：Apify 模式跳过关键词召回（避免烧 YouTube quota）", file=sys.stderr)
         keyword_candidates = []

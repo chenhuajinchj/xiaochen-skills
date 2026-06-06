@@ -30,6 +30,9 @@ KEYWORDS_ZH = [
     "Claude Code 实战",
 ]
 
+# 中文爆款层：按播放量召回的宽词，避免高播放中文视频被 order=date 埋掉
+KEYWORDS_ZH_VIEWCOUNT = ["Claude", "Claude Code", "AI 编程"]
+
 HOURS_WINDOW = max(1, min(168, int(os.environ.get("CYXJ_LOOKBACK_HOURS", "48"))))
 MAX_RESULTS_PER_KEYWORD = 25  # 召回阶段，附录用不需要拉满 50
 MAX_ZH_REFERENCE = 15         # 输出阶段截断
@@ -92,8 +95,11 @@ def recall(rotator: KeyRotator, published_after: str) -> list[dict]:
     all_videos = []
     seen_ids = set()
     failed = []
+    n_date = 0
+    n_view = 0
 
     for keyword in KEYWORDS_ZH:
+        n_date += 1
         try:
             resp = youtube_get(rotator, "/search", {
                 "q": keyword,
@@ -124,7 +130,42 @@ def recall(rotator: KeyRotator, published_after: str) -> list[dict]:
                 "url": f"https://www.youtube.com/watch?v={video_id}",
             })
 
-    if len(failed) == len(KEYWORDS_ZH):
+    # 中文爆款层：同样的 /search 调用，但按播放量召回，复用 seen_ids 去重
+    for keyword in KEYWORDS_ZH_VIEWCOUNT:
+        n_view += 1
+        try:
+            resp = youtube_get(rotator, "/search", {
+                "q": keyword,
+                "part": "snippet",
+                "type": "video",
+                "order": "viewCount",
+                "publishedAfter": published_after,
+                "relevanceLanguage": "zh",  # ISO-639-1 标准；不传 regionCode（CN 无效）
+                "maxResults": MAX_RESULTS_PER_KEYWORD,
+            }, timeout=30)
+        except Exception as e:
+            print(f"警告：中文爆款词 '{keyword}' 搜索失败 ({e})", file=sys.stderr)
+            failed.append(keyword)
+            continue
+
+        for item in resp.json().get("items", []):
+            video_id = item["id"]["videoId"]
+            if video_id in seen_ids:
+                continue
+            seen_ids.add(video_id)
+            snippet = item["snippet"]
+            all_videos.append({
+                "video_id": video_id,
+                "title": snippet["title"],
+                "channel": snippet["channelTitle"],
+                "description": snippet.get("description", ""),
+                "published_at": snippet["publishedAt"],
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+            })
+
+    print(f"中文召回搜索调用：date {n_date} + viewCount {n_view} = {n_date + n_view} 次", file=sys.stderr)
+
+    if len(failed) == len(KEYWORDS_ZH) + len(KEYWORDS_ZH_VIEWCOUNT):
         print("警告：所有中文关键词搜索全部失败，返回空列表（不影响主流程）", file=sys.stderr)
         return []
 
