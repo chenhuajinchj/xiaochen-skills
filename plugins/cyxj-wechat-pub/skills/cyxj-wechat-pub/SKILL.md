@@ -97,7 +97,7 @@ Obsidian .md
 | 感悟/情感 | 自然场景、星空、海边、山顶 | 柔和渐变、淡彩（诗意感） | 负空间留白叙事 |
 | 运营/商业 | 会议室、数据仪表盘、增长曲线 | 商务蓝+白+金色点缀（专业信任感） | 居中对称或黄金比例 |
 
-将匹配到的场景、配色、构图描述融入 Gemini prompt，让每篇文章的配图氛围与内容匹配，而不是千篇一律的白底 3D 渲染。
+将匹配到的场景、配色、构图描述融入图片生成 prompt，让每篇文章的配图氛围与内容匹配，而不是千篇一律的白底 3D 渲染。
 
 #### 3.2 渲染风格选择
 
@@ -106,13 +106,82 @@ Obsidian .md
 
 选择哪种风格由文章气质决定：技术/教程/商业类用 3D Toon，文艺/读书/情感类可用水彩风。如果不确定，询问用户。
 
-#### 3.3 插图生成
+#### 3.3 图片生成引擎（GPTIMG2 / gpt-image-2）
 
-1. 根据每个章节主题 + 上面匹配到的视觉方案，撰写 Gemini 图片生成 prompt
-2. 调用 Gemini 图片生成 API，传入 IP 参考图（`ip-reference/xiaojin-spec-sheet.png`）
-3. 生成场景图（prompt 中包含题材对应的场景、配色、构图描述）
+所有 IP 配图（插图 + 封面）统一走 **gpt-image-2 @ GPTIMG2 中转站**（OpenAI 兼容协议）。
+
+**凭据来源**：
+> `GPTIMG2_BASE_URL`（= `https://api.chatgpt-code.com`，**末尾没有 `/v1`**）和 `GPTIMG2_API_KEY` 从环境变量读取。
+> 如果环境变量未设置，先 `set -a; source ~/项目/自己的应用/密钥存储/.env; set +a` 加载，再继续。
+> 如果文件里没这两个 key，提示用户加。
+
+**模型**：`gpt-image-2`（中文标题渲染准确率高，适合封面直接出字）。
+
+**两个端点（按是否带 IP 参考图选）**：
+- **带 IP 参考图（保小金形象一致）→ `{base}/v1/images/edits`**（multipart 表单，`image` 字段传 `ip-reference/xiaojin-spec-sheet.png`）。IP 配图默认走这个端点。
+- **纯文生图（不需要小金形象，如纯场景图）→ `{base}/v1/images/generations`**（JSON body）。
+
+**出图方式**：请求带 `response_format=url`，拿到返回 JSON 里的图片 url 后**先 `curl` 下载落地到本地临时文件**，再走下方「图床上传流程」上传公网。不要直接把中转站 url 写进 HTML（可能过期）。
+
+**分辨率：默认 2K 出图**（公众号配图清晰度需要）。按构图比例选 `size`：
+| 比例 | 用途 | `size` |
+|------|------|--------|
+| 16:9 | 横图配图（默认） | `2560x1440` |
+| 4:3 | 横图配图（偏方） | `2048x1536` |
+| 9:16 | 竖图配图 | `1440x2560` |
+
+封面是 21:9 特殊规格，见 3.4。
+
+**curl 示例 A — 带 IP 参考图（`/v1/images/edits`，IP 配图走这个）**：
+
+```bash
+set -a; source ~/项目/自己的应用/密钥存储/.env; set +a   # 没设环境变量时先加载
+SKILL_DIR="${CLAUDE_PLUGIN_ROOT}/skills/cyxj-wechat-pub"
+
+curl -s -X POST "${GPTIMG2_BASE_URL}/v1/images/edits" \
+  -H "Authorization: Bearer ${GPTIMG2_API_KEY}" \
+  -F "model=gpt-image-2" \
+  -F "image=@${SKILL_DIR}/ip-reference/xiaojin-spec-sheet.png" \
+  -F "prompt=小金（光头、蓝色卫衣写着\"陈与小金\"、金链耳饰、蓝眼睛）站在全息工作站前，深蓝+霓虹青赛博朋克配色，居中对称构图，3D Stylized Toon 风格" \
+  -F "size=2560x1440" \
+  -F "n=1" \
+  -F "response_format=url"
+# 返回: {"data":[{"url":"https://.../xxxx.png"}]}
+```
+
+**curl 示例 B — 纯文生图（`/v1/images/generations`，无需小金形象时）**：
+
+```bash
+set -a; source ~/项目/自己的应用/密钥存储/.env; set +a
+
+curl -s -X POST "${GPTIMG2_BASE_URL}/v1/images/generations" \
+  -H "Authorization: Bearer ${GPTIMG2_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-image-2",
+    "prompt": "暖琥珀金+奶油色的文艺暖调咖啡馆窗边场景，三层景深，柔和光线，水彩绘本风",
+    "size": "2560x1440",
+    "n": 1,
+    "response_format": "url"
+  }'
+# 返回: {"data":[{"url":"https://.../xxxx.png"}]}
+```
+
+**拿到 url 后下载落地**：
+
+```bash
+IMG_URL=$(curl -s ... | python3 -c "import sys,json; print(json.load(sys.stdin)['data'][0]['url'])")
+curl -s -o /tmp/wechat-illust-1.png "$IMG_URL"
+# 然后把 /tmp/wechat-illust-1.png 走下方图床上传流程
+```
+
+**插图生成步骤**：
+
+1. 根据每个章节主题 + 上面匹配到的视觉方案，撰写 gpt-image-2 图片生成 prompt
+2. 调用 `{base}/v1/images/edits` 端点，传入 IP 参考图（`ip-reference/xiaojin-spec-sheet.png`），用上面的 curl 示例 A；prompt 中包含题材对应的场景、配色、构图描述
+3. 从返回 JSON 取 `data[0].url`，`curl` 下载到本地临时文件
 4. 上传到 Lsky Pro 图床（见下方上传流程）
-5. 在 HTML 中插入 `.img-card` 组件，使用公网 URL
+5. 在 HTML 中插入 `.img-card` 组件，使用图床返回的公网 URL
 
 **IP 配图数量策略**：
 - 短文章（<1500 字）且已有截图配图时，IP 配图只补无图章节，不要每章都插
@@ -144,14 +213,13 @@ curl -s -X POST "https://img.xiaochens.com/api/v1/upload" \
 
 封面是文章的门面，必须同时包含 **IP 形象 + 文章标题文字**。
 
-生成封面时，在 Gemini prompt 中明确要求：
+封面同样走 3.3 的 GPTIMG2 引擎和凭据。因为封面必须含小金形象，**用 `{base}/v1/images/edits` 端点**（带 IP 参考图，curl 示例 A），在 prompt 中明确要求：
 - IP 形象（小金）处于画面中，场景和配色按题材视觉方案
-- **文章标题文字直接渲染在封面图上**，作为设计的一部分（不是后期叠加）
+- **文章标题文字直接渲染在封面图上**，作为设计的一部分（不是后期叠加）。gpt-image-2 中文渲染准确率高，适合直接出标题字
 - 标题文字要清晰可读，字体风格与画面氛围匹配
-- 分辨率 1800x766（21:9 微信公众号封面规格）
+- 封面是 21:9 微信公众号规格，目标 1800x766。但 GPTIMG2 的 `size` 取离散档位，21:9 没有原生档——请求时用最接近的 16:9 `2560x1440`（2K，比例略宽），拿到图后再裁成 1800x766；或直接在 prompt 里要求 21:9 超宽构图。**不要回退到低分辨率出图**
 
-**API Key**：从环境变量 `GEMINI_API_KEY` 读取
-**模型**：推荐 `gemini-3.1-flash-image-preview`（快且便宜），高质量需求用 `gemini-3-pro-image-preview`
+**引擎 / 凭据 / 模型**：见 3.3（`gpt-image-2` @ `${GPTIMG2_BASE_URL}` = `https://api.chatgpt-code.com`，鉴权 `Authorization: Bearer ${GPTIMG2_API_KEY}`，`response_format=url` → 下载落地 → 图床上传）。
 
 ### Phase 4: CSS 内联 + 预览确认
 

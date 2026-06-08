@@ -2,8 +2,8 @@
 """
 视频封面生成（真人版）
 
-用 gpt-image-2（<your-endpoint> 中转站）+ 你的真人照片，生成带本人形象的封面。
-照片走 /v1/images/edits 端点重绘入场，人脸保持一致。
+用 gpt-image-2（GPTIMG2 中转站 api.chatgpt-code.com）+ 你的真人照片，生成带本人形象的封面。
+照片走 /v1/images/edits 端点重绘入场，人脸保持一致；输出 2K 级别大图，url 方式返回后落地。
 默认输出 4 个比例（YouTube 16:9 / 公众号 2.35:1 / 竖版 3:4 / 横版 4:3），
 每比例 2 张供挑选，全部并行生成（约 1 分钟出齐）。
 
@@ -14,8 +14,9 @@
   python3 generate.py --title "封面标题" --scene "坐在电脑前敲代码"
 
 key 与中转站地址自动从密钥存储读取（无需手动 export）：
-  ~/项目/自己的应用/密钥存储/.env 里的 EO_BASE_URL / EO_API_KEY
-也可用环境变量覆盖：EO_BASE_URL / EO_API_KEY
+  ~/项目/自己的应用/密钥存储/.env 里的 GPTIMG2_BASE_URL / GPTIMG2_API_KEY
+也可用环境变量覆盖：GPTIMG2_BASE_URL / GPTIMG2_API_KEY
+注意：GPTIMG2_BASE_URL（https://api.chatgpt-code.com）末尾【没有】/v1，脚本拼端点时自己补。
 """
 
 import argparse
@@ -33,22 +34,38 @@ DEFAULT_MODEL = "gpt-image-2"
 DEFAULT_FACE_DIR = Path.home() / "Pictures" / "封面形象"
 KEY_STORE = Path.home() / "项目" / "自己的应用" / "密钥存储" / ".env"
 
-# 比例 → 尺寸（均为 16 的倍数、长短比 ≤ 3:1、总像素达标，gpt-image-2 原生支持）
+# 比例 → 尺寸（2K 级别；边长均为 16 的倍数、长短比 ≤ 3:1，gpt-image-2 原生支持）
 RATIO_SIZE = {
-    "16:9": "2048x1152",    # YouTube 缩略图
-    "2.35:1": "2560x1088",  # 公众号分享大图
-    "3:4": "1536x2048",     # 竖版
-    "4:3": "2048x1536",     # 横版
+    "16:9": "2560x1440",    # YouTube 缩略图（2K）
+    "2.35:1": "2560x1088",  # 公众号分享大图（长短比 2.35:1，对齐 16）
+    "3:4": "1536x2048",     # 竖版（2K）
+    "4:3": "2048x1536",     # 横版（2K）
 }
 DEFAULT_RATIOS = "16:9,2.35:1,3:4,4:3"
 
 
+def _api_base(base: str) -> str:
+    """把读到的 base 规整成可直接拼端点的形式：补全到以 /v1 结尾。
+
+    GPTIMG2_BASE_URL = https://api.chatgpt-code.com（末尾【没有】/v1），需自己补；
+    但若用户万一填了带 /v1 的，则不重复加。返回值不含末尾斜杠，
+    端点直接 base + "/images/generations" / "/images/edits" 即可。
+    """
+    base = base.rstrip("/")
+    if not base.endswith("/v1"):
+        base = base + "/v1"
+    return base
+
+
 def load_credentials() -> tuple[str, str]:
-    """读 base_url 和 api_key：环境变量优先，否则从密钥存储 .env 解析。"""
-    base = os.environ.get("EO_BASE_URL")
-    key = os.environ.get("EO_API_KEY")
+    """读 base_url 和 api_key：环境变量优先，否则从密钥存储 .env 解析。
+
+    返回的 base 已规整到以 /v1 结尾，调用方直接拼 /images/edits 等端点。
+    """
+    base = os.environ.get("GPTIMG2_BASE_URL")
+    key = os.environ.get("GPTIMG2_API_KEY")
     if base and key:
-        return base.rstrip("/"), key
+        return _api_base(base), key
 
     if KEY_STORE.exists():
         for line in KEY_STORE.read_text(encoding="utf-8").splitlines():
@@ -57,20 +74,20 @@ def load_credentials() -> tuple[str, str]:
                 continue
             k, _, v = line.partition("=")
             k, v = k.strip(), v.strip().strip('"').strip("'")
-            if k == "EO_BASE_URL" and not base:
+            if k == "GPTIMG2_BASE_URL" and not base:
                 base = v
-            elif k == "EO_API_KEY" and not key:
+            elif k == "GPTIMG2_API_KEY" and not key:
                 key = v
 
     if not base or not key:
         print(
-            "❌ 找不到中转站配置。需要 EO_BASE_URL 和 EO_API_KEY。\n"
+            "❌ 找不到中转站配置。需要 GPTIMG2_BASE_URL 和 GPTIMG2_API_KEY。\n"
             f"   已查找：环境变量 + {KEY_STORE}\n"
             "   请在密钥存储 .env 里确认这两行存在，或先 export。",
             file=sys.stderr,
         )
         sys.exit(1)
-    return base.rstrip("/"), key
+    return _api_base(base), key
 
 
 def resolve_faces(face_arg: str | None) -> list[Path]:
@@ -150,8 +167,15 @@ def generate_one(
     if not size:
         # 自定义比例兜底：交给中转站 auto
         size = "auto"
+    # edits 是 multipart 表单：size / response_format 作为表单字段传，要求返回图片 url
     body, boundary = _multipart(
-        {"model": model, "prompt": build_prompt(title, scene), "size": size, "n": "1"},
+        {
+            "model": model,
+            "prompt": build_prompt(title, scene),
+            "size": size,
+            "n": "1",
+            "response_format": "url",
+        },
         faces,
     )
     req = urllib.request.Request(
@@ -159,6 +183,8 @@ def generate_one(
         headers={
             "Authorization": "Bearer " + key,
             "Content-Type": f"multipart/form-data; boundary={boundary}",
+            # 中转站结果文件 CDN(files.chatgpt-topup.com)会拦 urllib 默认 UA(403)，统一带浏览器 UA
+            "User-Agent": "Mozilla/5.0",
         },
         method="POST",
     )
@@ -168,14 +194,17 @@ def generate_one(
         with urllib.request.urlopen(req, timeout=300) as r:
             d = json.load(r)
         item = d["data"][0]
+        # 契约：优先走 url（response_format=url）下载落地；b64_json 作兜底
+        if item.get("url"):
+            # 下载结果图：CDN 拦 urllib 默认 UA(403)，必须带浏览器 UA
+            dl_req = urllib.request.Request(item["url"], headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(dl_req, timeout=120) as ir:
+                output_dir.mkdir(parents=True, exist_ok=True)
+                out_path.write_bytes(ir.read())
+            return out_path
         if item.get("b64_json"):
             output_dir.mkdir(parents=True, exist_ok=True)
             out_path.write_bytes(base64.b64decode(item["b64_json"]))
-            return out_path
-        if item.get("url"):
-            with urllib.request.urlopen(item["url"], timeout=120) as ir:
-                output_dir.mkdir(parents=True, exist_ok=True)
-                out_path.write_bytes(ir.read())
             return out_path
         print(f"⚠ {ratio} #{idx}: 返回里没有图片", file=sys.stderr)
         return None

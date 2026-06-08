@@ -12,12 +12,30 @@ from datetime import datetime
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 import io
+import requests
 from google import genai
 from google.genai import types
 
 # API Configuration
-DEFAULT_IMAGE_MODEL = 'gemini-3.1-flash-image-preview'
+# Image generation backend: GPTIMG2 (gpt-image-2 @ api.chatgpt-code.com, OpenAI-compatible HTTP)
+DEFAULT_IMAGE_MODEL = 'gpt-image-2'
+# Text backend (prompt enhancement) — unchanged, still Google Gemini
 DEFAULT_TEXT_MODEL = 'gemini-3.1-flash-lite-preview'
+
+# aspect_ratio -> 2K size mapping for gpt-image-2 (edge lengths aligned to multiples of 16)
+ASPECT_RATIO_SIZES = {
+    "9:16": "1440x2560",
+    "16:9": "2560x1440",
+    "1:1": "2048x2048",
+    "4:3": "2048x1536",
+    "3:4": "1536x2048",
+}
+DEFAULT_SIZE = "1440x2560"  # falls back to 9:16 portrait when ratio unmapped
+
+
+def aspect_ratio_to_size(aspect_ratio):
+    """Map an aspect ratio string to a 2K gpt-image-2 size string."""
+    return ASPECT_RATIO_SIZES.get(aspect_ratio, DEFAULT_SIZE)
 
 # Photography styles that use photorealistic base instead of Mondo poster base
 PHOTO_STYLES = (
@@ -85,13 +103,53 @@ ARTIST_STYLES = {
 
 
 def get_client():
-    """Get Google Gemini API client"""
+    """Get Google Gemini API client (TEXT path only — prompt enhancement)"""
     api_key = os.getenv('GEMINI_API_KEY')
     if not api_key:
         print("Error: GEMINI_API_KEY environment variable is required.")
         print("Please set it with your Google Gemini API key.")
         sys.exit(1)
     return genai.Client(api_key=api_key)
+
+
+def _load_gptimg2():
+    """
+    Load GPTIMG2 (gpt-image-2) base URL and API key.
+
+    Resolution order: environment variables first, then fall back to the
+    shared .env file. The base URL is normalized so callers can append
+    "/v1/images/..." regardless of whether the user already included "/v1".
+
+    Returns:
+        (base, key) tuple. base has NO trailing slash and NO trailing /v1.
+    """
+    base = os.environ.get("GPTIMG2_BASE_URL")
+    key = os.environ.get("GPTIMG2_API_KEY")
+
+    if not base or not key:
+        env_path = os.path.expanduser("~/项目/自己的应用/密钥存储/.env")
+        try:
+            with open(env_path, encoding="utf-8") as f:
+                for ln in f:
+                    ln = ln.strip()
+                    if ln.startswith("GPTIMG2_BASE_URL=") and not base:
+                        base = ln.split("=", 1)[1].strip()
+                    elif ln.startswith("GPTIMG2_API_KEY=") and not key:
+                        key = ln.split("=", 1)[1].strip()
+        except FileNotFoundError:
+            pass
+
+    if not base or not key:
+        print("Error: GPTIMG2_BASE_URL and GPTIMG2_API_KEY are required for image generation.")
+        print("Set them as environment variables or in ~/项目/自己的应用/密钥存储/.env")
+        sys.exit(1)
+
+    # Normalize: strip trailing slash, then strip a trailing /v1 if present.
+    # URLs are always built as f"{base}/v1/images/..." by callers.
+    base = base.rstrip("/")
+    if base.endswith("/v1"):
+        base = base[:-3]
+    return base, key
 
 
 def ai_enhance_prompt(original_subject, design_type, user_preferences=""):
@@ -279,74 +337,140 @@ def load_ip_references(ip_ref_dir):
     return images
 
 
+def _pil_to_png_bytes(img):
+    """Encode a PIL Image to PNG bytes (RGBA-safe)."""
+    buf = io.BytesIO()
+    # gpt-image-2 edits accepts PNG; convert mode if needed to avoid save errors
+    if img.mode not in ("RGB", "RGBA", "L", "P"):
+        img = img.convert("RGBA")
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf.read()
+
+
+def _download_and_save(image_url, output_path):
+    """Download an image from a URL and write the bytes to output_path."""
+    dl = requests.get(image_url, timeout=300)
+    dl.raise_for_status()
+    os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)
+    with open(output_path, "wb") as out:
+        out.write(dl.content)
+    print(f"✅ Saved to {output_path}")
+    return output_path
+
+
 def generate_image(prompt, output_path=None, model=DEFAULT_IMAGE_MODEL, aspect_ratio="9:16", input_image=None, ip_refs=None):
     """
-    Generate image using Google Gemini API with optional image-to-image
+    Generate image using GPTIMG2 (gpt-image-2, OpenAI-compatible HTTP API).
+
+    - No reference images -> POST {base}/v1/images/generations  (text-to-image)
+    - Reference images present (ip_refs and/or input_image) ->
+      POST {base}/v1/images/edits (multipart, image-to-image / IP reference)
+
+    Always requests response_format="url", then downloads the URL bytes and
+    saves to output_path (preserving the original naming/output-path logic).
 
     Args:
         prompt: The text prompt
         output_path: Path to save the image
-        model: Model to use
-        aspect_ratio: Aspect ratio
+        model: Model to use (default gpt-image-2)
+        aspect_ratio: Aspect ratio (mapped to a 2K size)
         input_image: Optional input image path for image-to-image
         ip_refs: Optional list of PIL Image objects as IP character references
 
     Returns:
         Path to saved image or None if failed
     """
-    client = get_client()
+    base, key = _load_gptimg2()
+    size = aspect_ratio_to_size(aspect_ratio)
 
-    contents = [prompt]
+    if not output_path:
+        timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+        output_path = f"outputs/mondo-{timestamp}.png"
 
-    # Add IP reference images
+    # Collect reference images: IP refs (PIL Images) + input image (file path)
+    ref_files = []  # list of (filename, png_bytes)
     if ip_refs:
-        contents.extend(ip_refs)
-
-    # Add image-to-image support
+        for idx, img in enumerate(ip_refs):
+            try:
+                ref_files.append((f"ip_ref_{idx}.png", _pil_to_png_bytes(img)))
+            except Exception as e:
+                print(f"⚠ Could not encode IP reference #{idx}: {e}")
     if input_image and os.path.exists(input_image):
         try:
-            img = Image.open(input_image)
-            contents.append(img)
+            with open(input_image, "rb") as f:
+                ref_files.append((os.path.basename(input_image), f.read()))
             print(f"📷 Using input image: {input_image}")
         except Exception as e:
             print(f"⚠ Could not load input image: {e}")
 
-    print(f"🎨 Generating with {model}")
-    print(f"📐 Aspect ratio: {aspect_ratio}")
+    use_edits = len(ref_files) > 0
+
+    print(f"🎨 Generating with {model} (GPTIMG2)")
+    print(f"📐 Aspect ratio: {aspect_ratio} -> size {size}")
+    print(f"🔀 Mode: {'image edits (reference images)' if use_edits else 'text-to-image'}")
     print(f"✍️  Prompt: {prompt[:80]}..." if len(prompt) > 80 else f"✍️  Prompt: {prompt}")
     print("⏳ Please wait...\n")
 
+    headers = {"Authorization": f"Bearer {key}"}
+
     try:
-        response = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                responseModalities=["IMAGE"],
-                imageConfig=types.ImageConfig(
-                    aspectRatio=aspect_ratio,
-                ),
-            ),
-        )
+        if use_edits:
+            url = f"{base}/v1/images/edits"
+            data = {
+                "model": model,
+                "prompt": prompt,
+                "size": size,
+                "response_format": "url",
+            }
+            # multipart: send each reference image under the "image" field
+            files = [
+                ("image", (fname, fbytes, "image/png"))
+                for (fname, fbytes) in ref_files
+            ]
+            resp = requests.post(url, headers=headers, data=data, files=files, timeout=600)
+        else:
+            url = f"{base}/v1/images/generations"
+            payload = {
+                "model": model,
+                "prompt": prompt,
+                "size": size,
+                "response_format": "url",
+            }
+            resp = requests.post(
+                url,
+                headers={**headers, "Content-Type": "application/json"},
+                json=payload,
+                timeout=600,
+            )
 
-        # Extract image from response
-        if (response.candidates and
-                response.candidates[0].content and
-                response.candidates[0].content.parts):
-            for part in response.candidates[0].content.parts:
-                if part.inline_data and part.inline_data.mime_type.startswith("image/"):
-                    image = part.as_image()
+        if resp.status_code != 200:
+            print(f"❌ API error {resp.status_code}: {resp.text[:500]}")
+            return None
 
-                    if not output_path:
-                        timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-                        output_path = f"outputs/mondo-{timestamp}.png"
+        body = resp.json()
+        data_list = body.get("data") or []
+        if not data_list:
+            print(f"❌ No image data in response: {json.dumps(body)[:500]}")
+            return None
 
-                    os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)
+        item = data_list[0]
+        image_url = item.get("url")
+        if image_url:
+            return _download_and_save(image_url, output_path)
 
-                    image.save(output_path)
-                    print(f"✅ Saved to {output_path}")
-                    return output_path
+        # Some OpenAI-compatible endpoints may return b64 even when url asked;
+        # handle gracefully as a fallback.
+        b64 = item.get("b64_json")
+        if b64:
+            import base64
+            os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else '.', exist_ok=True)
+            with open(output_path, "wb") as out:
+                out.write(base64.b64decode(b64))
+            print(f"✅ Saved to {output_path} (from b64 fallback)")
+            return output_path
 
-        print("❌ No image data in response")
+        print(f"❌ Response missing both url and b64_json: {json.dumps(item)[:300]}")
         return None
 
     except Exception as e:

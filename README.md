@@ -18,7 +18,7 @@ Claude Code's built-in skills cover general tasks. This collection adds a vertic
 | [cyxj-subfix](./plugins/cyxj-subfix/) | Fix ASR subtitles from DaVinci Resolve: SRT cleanup → Gemini semantic correction → Claude Opus review | `/字幕修正`, `修正字幕`, `字幕错别字`, `SRT 修正` | `GEMINI_API_KEY`; Python: `google-genai`, `pysrt` |
 | [cyxj-wechat-pub](./plugins/cyxj-wechat-pub/) | Convert Obsidian Markdown to WeChat Official Account HTML with 3 built-in CSS themes (TATALAB blue / noir-gold / orange editorial) | `发布到公众号`, `公众号排版`, `微信发布`, `排版文章` | npm: `juice`; WeChat backend access |
 | [cyxj-obsidian-build](./plugins/cyxj-obsidian-build/) | Compile an Obsidian vault into a 3-tier knowledge architecture (Ingest / Query / Lint) inspired by Karpathy's LLM Wiki methodology | `整理 Obsidian`, `编译知识库`, `摄入笔记`, `查知识库`, `健康度检查` | Obsidian vault path configured; no API key |
-| [cyxj-poster](./plugins/cyxj-poster/) | Generate master-level poster / book cover / album art from one sentence — 33+ designer styles + 10 photography styles | `生成海报`, `封面设计`, `做个封面` | `GEMINI_API_KEY`; Python: `google-genai`, `pillow` |
+| [cyxj-poster](./plugins/cyxj-poster/) | Generate master-level poster / book cover / album art from one sentence — 33+ designer styles + 10 photography styles | `生成海报`, `封面设计`, `做个封面` | `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY` (gpt-image-2 生图) + `GEMINI_API_KEY` (文字扩写); Python: `requests`, `google-genai`, `pillow` |
 | [cyxj-youtube-topics](./plugins/cyxj-youtube-topics/) | Discover YouTube videos published in the last 48 hours on a topic, cluster by theme, score each with verdict (make / wait / follow / skip), write to Obsidian topic library | `选题`, `找选题`, `YouTube 最近有什么`, `有什么新视频` | `YOUTUBE_DATA_API_KEY`; Python: `requests`; Obsidian vault path |
 | [cyxj-yt-creator](./plugins/cyxj-yt-creator/) | Research how YouTubers cover a tool/topic via Apify: fetch transcripts, rank by date/views, write differentiation notes to Obsidian draft queue | `查博主怎么用`, `用 Apify 搜 YouTube`, `研究这个工具的 YouTube 视频` | `APIFY_API_TOKEN`; Python: `requests`; Obsidian vault path |
 | [cyxj-notebook-research](./plugins/cyxj-notebook-research/) | Submit videos from Obsidian topic library to Google Notebook LM in batch, pull transcripts and research reports back to Obsidian | `帮我研究一下 XXX 话题`, `研究一下这个选题`, `把选题提交给 Notebook LM` | Google account with Notebook LM access; Python: `notebooklm-py`, `python-frontmatter`; `CYXJ_VAULT_BASE` env var |
@@ -82,7 +82,7 @@ Skills that work with minimal setup (only Obsidian vault path needed):
 
 Skills that require API keys:
 - `cyxj-subfix` → `GEMINI_API_KEY`
-- `cyxj-poster` → `GEMINI_API_KEY`
+- `cyxj-poster` → `GPTIMG2_BASE_URL`/`GPTIMG2_API_KEY` (gpt-image-2 生图) + `GEMINI_API_KEY` (文字扩写)
 - `cyxj-youtube-topics` → `YOUTUBE_DATA_API_KEY`
 - `cyxj-yt-creator` → `APIFY_API_TOKEN`
 - `cyxj-video-cover` → OpenAI-compatible API key (proxy endpoint)

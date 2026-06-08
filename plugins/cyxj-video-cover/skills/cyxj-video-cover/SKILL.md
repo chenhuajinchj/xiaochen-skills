@@ -18,7 +18,8 @@ description: |
 ## 前置准备（首次）
 
 1. **中转站 key**（已配好则跳过）——脚本自动从密钥存储读，无需手动 export：
-   - `~/项目/自己的应用/密钥存储/.env` 里的 `EO_BASE_URL` 和 `EO_API_KEY`
+   - `~/项目/自己的应用/密钥存储/.env` 里的 `GPTIMG2_BASE_URL` 和 `GPTIMG2_API_KEY`
+   - `GPTIMG2_BASE_URL` = `https://api.chatgpt-code.com`（末尾**没有** `/v1`，脚本拼端点时自己补）
    - 也可用同名环境变量覆盖
 
 2. **真人照片**——默认读 `~/Pictures/封面形象/`（放几张本人正脸清晰的照片即可），
@@ -87,14 +88,14 @@ python3 $SKILL_DIR/scripts/generate.py \
 
 | 用途 | 比例 | 实际尺寸 | 文件名 |
 |------|------|---------|--------|
-| YouTube | 16:9 | ~1672×941 | cover_16x9_N.png |
-| 公众号 | 2.35:1 | ~1923×818 | cover_2_35x1_N.png |
-| 竖版 | 3:4 | ~1086×1448 | cover_3x4_N.png |
-| 横版 | 4:3 | ~1448×1086 | cover_4x3_N.png |
+| YouTube | 16:9 | 2560×1440 | cover_16x9_N.png |
+| 公众号 | 2.35:1 | 2560×1088 | cover_2_35x1_N.png |
+| 竖版 | 3:4 | 1536×2048 | cover_3x4_N.png |
+| 横版 | 4:3 | 2048×1536 | cover_4x3_N.png |
 
-> ⚠️ **尺寸说明**：中转站 `<your-endpoint>` 的 gpt-image-2 有分辨率天花板（约 157 万像素），
-> 请求再大的 `size` 也会被压到上表尺寸——**比例精确，但拿不到 2K/4K**。
-> 这对 YouTube（推荐 1280×720）和公众号都够用。若以后换了能出大图的源，改脚本里的 `RATIO_SIZE` 即可。
+> ℹ️ **尺寸说明**：GPTIMG2（`api.chatgpt-code.com`）的 gpt-image-2 出 **2K 级别**大图，
+> 边长均对齐 16 的倍数、长短比 ≤ 3:1。图片走 `response_format=url` 返回，脚本拿到 url 后下载落地为 PNG。
+> 想改尺寸/比例改脚本里的 `RATIO_SIZE` 即可。
 
 ## 视觉风格（内置，无需用户指定）
 
@@ -107,8 +108,10 @@ python3 $SKILL_DIR/scripts/generate.py \
 
 ## 技术说明
 
-- 模型 **gpt-image-2** @ `<your-endpoint>` 中转站（OpenAI 兼容）
-- 走 `/v1/images/edits` 端点：传真人照片做参考图重绘，保人脸一致
+- 模型 **gpt-image-2** @ GPTIMG2 中转站 `api.chatgpt-code.com`（OpenAI 兼容）
+- 走 `{base}/v1/images/edits` 端点：传真人照片做参考图重绘，保人脸一致
+  （`GPTIMG2_BASE_URL` 末尾无 `/v1`，脚本读到 base 后自动补全到 `/v1`）
+- 出 **2K** 大图，`response_format=url` 返回 url，脚本下载后落地为 PNG
 - 中文文字渲染准确率高（实测大标题基本不错字），靠每比例多出几张进一步兜底
 - 并行生成（ThreadPoolExecutor），4 比例×2 张约 1 分钟出齐
 - key 从密钥存储自动读取，不写进代码
@@ -117,5 +120,5 @@ python3 $SKILL_DIR/scripts/generate.py \
 
 - Python 3.11+（仅标准库）
 - 真人照片目录（默认 `~/Pictures/封面形象/`）
-- 密钥存储 `.env` 里的 `EO_BASE_URL` / `EO_API_KEY`
+- 密钥存储 `.env` 里的 `GPTIMG2_BASE_URL` / `GPTIMG2_API_KEY`
 - **可选**：`cyxj-psjpg` skill（Step 5 把选定封面转上传用 JPG；它本身需 Photoshop + exiftool）

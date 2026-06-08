@@ -1,3 +1,4 @@
 # XCYJ Poster Design - Python Dependencies
-google-genai>=1.0.0
+google-genai>=1.0.0   # TEXT path: prompt enhancement (GEMINI_API_KEY)
 Pillow>=10.0.0
+requests>=2.28.0      # IMAGE path: GPTIMG2 (gpt-image-2) OpenAI-compatible HTTP

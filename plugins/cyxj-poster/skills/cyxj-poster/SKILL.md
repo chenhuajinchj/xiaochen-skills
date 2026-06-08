@@ -13,6 +13,12 @@ description: 一句话生成大师级海报/封面设计。33+设计师风格+10
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "subject" "type" [options]
 ```
 
+> **生图后端**：gpt-image-2（GPTIMG2 @ `api.chatgpt-code.com`，OpenAI 兼容 HTTP）。
+> 默认输出 2K 分辨率，统一用 `response_format=url` 取图后下载落地。
+> - 文生图走 `/v1/images/generations`；带参考图（`--ip-ref` / `--input`）时走 `/v1/images/edits`（multipart）。
+> - 需要环境变量 `GPTIMG2_BASE_URL` / `GPTIMG2_API_KEY`（未设置则从 `~/项目/自己的应用/密钥存储/.env` 读取）。
+> - prompt 的 AI 扩写（`--ai-enhance`）仍由 Gemini 文本模型完成，需 `GEMINI_API_KEY`，与生图无关。
+
 ### 必填参数
 
 | 参数 | 说明 | 示例 |
@@ -38,14 +44,17 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/generate_mondo_enhanced.py "subject" "type
 
 ### 常用画幅比例
 
-| 比例 | 用途 |
-|------|------|
-| `9:16` | 电影海报、书籍封面、手机竖屏（默认） |
-| `16:9` | 文章配图、横屏封面 |
-| `21:9` | 公众号封面 |
-| `3:4` | 小红书配图 |
-| `1:1` | 专辑封面、头像 |
-| `4:3` | 通用横版 |
+均为 2K 输出，边长对齐 16 的倍数：
+
+| 比例 | 输出尺寸 | 用途 |
+|------|---------|------|
+| `9:16` | 1440x2560 | 电影海报、书籍封面、手机竖屏（默认） |
+| `16:9` | 2560x1440 | 文章配图、横屏封面 |
+| `3:4` | 1536x2048 | 小红书配图 |
+| `1:1` | 2048x2048 | 专辑封面、头像 |
+| `4:3` | 2048x1536 | 通用横版 |
+
+> `21:9` 等未在 2K 映射表内的比例会回退到 9:16（1440x2560）。需要超宽幅时请用上表内的比例。
 
 ## 调用示例
 
